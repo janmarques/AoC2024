@@ -1025,18 +1025,19 @@ var timer = Stopwatch.StartNew();
 
 
 var lists = input.Split(Environment.NewLine).Select(x => x.Split("   "));
-var column1 = lists.Select(x => x[0]).Select(int.Parse).OrderBy(x => x);
-var column2 = lists.Select(x => x[1]).Select(int.Parse).OrderBy(x => x);
+var column1 = lists.Select(x => x[0]).Select(long.Parse).OrderBy(x => x);
+var column2 = lists.Select(x => x[1]).Select(long.Parse).OrderBy(x => x);
 
 
-var result = 0;
+long result = 0;
 
-for (int i = 0; i < column1.Count(); i++)
+foreach (var entry in column1)
 {
-    result += Math.Abs(column1.ElementAt(i) - column2.ElementAt(i));
+    result += entry * column2.Count(x => x == entry);
+
 }
 
 timer.Stop();
-Console.WriteLine(result); // 2344935
+Console.WriteLine(result); // 2344935  / 27647262
 Console.WriteLine(timer.ElapsedMilliseconds + "ms");
 Console.ReadLine();
