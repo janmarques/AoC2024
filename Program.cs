@@ -182,35 +182,31 @@ var timer = System.Diagnostics.Stopwatch.StartNew();
 var result = 0;
 
 //var directions = new[] { (0, 1) };
-var directions = new[] { (0, 1), (0, -1), (1, -1), (-1, 1), (1, 0), (-1, 0), (-1, -1), (1, 1), };
+var directions = new[] { new[] { (1, 1), (-1, -1) }, new[] { (-1, 1), (1, -1) } };
 var needle = "XMAS";
 
 var rows = input.Split(Environment.NewLine);
 var height = rows.Length;
 var width = rows[0].Length;
+
+char? SafeGet(int x, int y)
+{
+    if (x < 0 || y < 0 || x >= height || y >= width)
+    {
+        return null;
+    }
+    return rows[x][y];
+}
 for (int i = 0; i < height; i++)
 {
     for (int j = 0; j < width; j++)
     {
-        if (rows[i][j] == needle[0])
+        if (rows[i][j] == 'A')
         {
-            foreach (var direction in directions)
+            var diagonals = directions.Select(x => x.Select(y => SafeGet(i + y.Item1, j + y.Item2)));
+            if (diagonals.All(x => x.Contains('M') && x.Contains('S')))
             {
-                for (int k = 0; k < needle.Length; k++)
-                {
-                    var x = i + (k * direction.Item1);
-                    var y = j + (k * direction.Item2);
-                    if (x < 0 || y < 0 || x >= height || y >= width)
-                    {
-                        goto next;
-                    }
-                    if (rows[x][y] != needle[k])
-                    {
-                        goto next;
-                    }
-                }
                 result++;
-            next:;
             }
         }
     }
