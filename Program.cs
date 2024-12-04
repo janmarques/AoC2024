@@ -1016,11 +1016,30 @@ input = fullInput;
 //input = smallest;
 var timer = System.Diagnostics.Stopwatch.StartNew();
 
+
+//var x = ExceptElementAt(new[] { 1, 2, 3 }, 0);
+
 var result = 0;
 
 var lines = input.Split(Environment.NewLine).Select(x => x.Split(' ').Select(int.Parse));
 result = lines.Count(EvaluateLine);
 bool EvaluateLine(IEnumerable<int> enumerable)
+{
+    if (EvaluateLineInternal(enumerable))
+    {
+        return true;
+    }
+    for (int i = 0; i < enumerable.Count(); i++)
+    {
+        if (EvaluateLineInternal(ExceptElementAt(enumerable, i)))
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool EvaluateLineInternal(IEnumerable<int> enumerable)
 {
     var diffs = Enumerable.Range(1, enumerable.Count() - 1).Select(i => enumerable.ElementAt(i - 1) - enumerable.ElementAt(i));
     var singleDirection = diffs.All(x => x < 0) || diffs.All(x => x > 0);
@@ -1028,8 +1047,13 @@ bool EvaluateLine(IEnumerable<int> enumerable)
     return singleDirection && withinRange;
 }
 
+IEnumerable<int> ExceptElementAt(IEnumerable<int> enumerable, int position)
+{
+    return enumerable.Take(position).Concat(enumerable.Skip(position + 1));
+}
+
 timer.Stop();
-Console.WriteLine(result);
+Console.WriteLine(result); // 580 too high
 Console.WriteLine(timer.ElapsedMilliseconds + "ms");
 Console.ReadLine();
 
