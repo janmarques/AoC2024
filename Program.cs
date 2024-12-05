@@ -1410,14 +1410,14 @@ var lines = input.Split(Environment.NewLine);
 var rules = lines.Where(x => x.Contains('|')).Select(x => x.Split('|').Select(int.Parse));
 var pagesToProduceCollection = lines.Where(x => x.Contains(',')).Select(x => x.Split(',').Select(int.Parse));
 
-foreach (var pagesToProduce in pagesToProduceCollection)
+var invalids = pagesToProduceCollection.Where(x => !IsValidOrder(x));
+
+foreach (var invalid in invalids)
 {
-    var valid = IsValidOrder(pagesToProduce);
-    if (valid)
-    {
-        var middleIndex = pagesToProduce.Count() / 2;
-        result += pagesToProduce.ElementAt(middleIndex);
-    }
+    var reordered = invalid.OrderBy(x => x, new ElfComparer(rules)).OrderByDescending(x => x, new ElfComparer(rules)).ToList();
+
+        var middleIndex = reordered.Count() / 2;
+        result += reordered.ElementAt(middleIndex);
 }
 
 bool IsValidOrder(IEnumerable<int> enumerable)
@@ -1441,3 +1441,15 @@ timer.Stop();
 Console.WriteLine(result);
 Console.WriteLine(timer.ElapsedMilliseconds + "ms");
 Console.ReadLine();
+
+class ElfComparer(IEnumerable<IEnumerable<int>> rules) : IComparer<int>
+{
+    public int Compare(int x, int y)
+    {
+        if (rules.Any(r => r.ElementAt(0) == x && r.ElementAt(1) == y))
+        {
+            return -1;
+        }
+        return 0;
+    }
+}
