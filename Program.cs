@@ -1407,41 +1407,13 @@ var timer = System.Diagnostics.Stopwatch.StartNew();
 var result = 0L;
 
 var lines = input.Split(Environment.NewLine);
-var rules = lines.Where(x => x.Contains('|')).Select(x => x.Split('|').Select(int.Parse));
-var pagesToProduceCollection = lines.Where(x => x.Contains(',')).Select(x => x.Split(',').Select(int.Parse));
-var invalids = pagesToProduceCollection.Where(x => !IsValidOrder(x)).ToList();
-
-
-
-var nodes = rules.SelectMany(x => x).Distinct().ToDictionary(x => x, x => new Node { Value = x });
-foreach (var rule in rules)
-{
-    var x = rule.ElementAt(0);
-    var y = rule.ElementAt(1);
-
-    nodes[x].After.Add(nodes[y]);
-    nodes[y].Before.Add(nodes[x]);
-}
-
-//var ruleSetInOrder = rules.SelectMany(x => x).Distinct().OrderByDescending(x => x, new ElfComparer(rules)).OrderBy(x => x, new ElfComparer(rules)).ToList();
-
-//var xes = rules.Select(x => x.ElementAt(0)).Distinct();
-//var ys = rules.Select(x => x.ElementAt(1)).Distinct();
-//var end = xes.Except(ys);
-
-//if (!IsValidOrder(ruleSetInOrder))
-//{
-
-//}
+var rules = lines.Where(x => x.Contains('|')).Select(x => x.Split('|').Select(int.Parse)).ToList();
+var pagesToProduceCollection = lines.Where(x => x.Contains(',')).Select(x => x.Split(',').Select(int.Parse)).ToList();
+var invalids = pagesToProduceCollection.Where(x => !IsValidOrder(x));
 
 foreach (var invalid in invalids)
 {
-    //https://stackoverflow.com/questions/42938201/custom-ordering-in-c-sharp
-    var reordered = invalid.OrderBy(x => x, new ElfComparer(nodes)).ToList();
-    if (!IsValidOrder(reordered))
-    {
-
-    }
+    var reordered = invalid.OrderBy(x => x, new ElfComparer(rules));
     var middleIndex = reordered.Count() / 2;
     result += reordered.ElementAt(middleIndex);
 }
@@ -1464,26 +1436,19 @@ bool IsValidOrder(IEnumerable<int> enumerable)
 }
 
 timer.Stop();
-Console.WriteLine(result); // 6179
+Console.WriteLine(result);
 Console.WriteLine(timer.ElapsedMilliseconds + "ms");
 Console.ReadLine();
 
-class Node
-{
-    public int Value { get; set; }
-    public List<Node> Before { get; set; } = new List<Node>();
-    public List<Node> After { get; set; } = new List<Node>();
-}
-
-class ElfComparer(Dictionary<int, Node> nodes) : IComparer<int>
+class ElfComparer(IEnumerable<IEnumerable<int>> rules) : IComparer<int>
 {
     public int Compare(int x, int y)
     {
-        if (nodes[x].Before.Any(e => e.Value == y))
+        if (rules.Any(r => r.ElementAt(0) == x && r.ElementAt(1) == y))
         {
             return -1;
         }
-        if (nodes[x].After.Any(e => e.Value == y))
+        if (rules.Any(r => r.ElementAt(1) == x && r.ElementAt(0) == y))
         {
             return 1;
         }
