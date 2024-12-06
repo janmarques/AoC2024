@@ -177,13 +177,13 @@ var start = (-1, -1);
     }
 }
 
-var potentialBlockages = Evaluate().Item2.Select(x => (x.X, x.Y)).Distinct();
+var potentialBlockages = Evaluate().Select(x => (x.X, x.Y)).Distinct();
 foreach (var potentialBlockage in potentialBlockages)
 {
     var (x, y) = potentialBlockage;
     if (grid[x, y]) { continue; }
     grid[x, y] = true;
-    if (Evaluate().Item1)
+    if (Evaluate2())
     {
         result++;
     }
@@ -219,7 +219,7 @@ bool? TryGetNode(int x, int y)
 timer.Stop();
 Console.WriteLine(result); // 1604
 Console.WriteLine(timer.ElapsedMilliseconds + "ms");
-Console.ReadLine();
+//Console.ReadLine();
 
 
 void PrintGrid<T>(T[][] grid)
@@ -234,9 +234,42 @@ void PrintGrid<T>(T[][] grid)
     }
 }
 
-(bool, HashSet<(int X, int Y, int Direction)>) Evaluate()
+HashSet<(int X, int Y, int Direction)> Evaluate()
 {
     var visitedPairs = new HashSet<(int X, int Y, int Direction)>();
+    var direction = 0;
+    (int X, int Y) guardPosition = (start.Item1, start.Item2);
+    while (true)
+    {
+        bool? facingNode = true;
+        (int X, int Y) facing = (0, 0);
+        while (facingNode.Value)
+        {
+            facing = GetNext(guardPosition.X, guardPosition.Y, direction);
+            facingNode = TryGetNode(facing.X, facing.Y);
+            if (facingNode == null)
+            {
+                return visitedPairs;
+            }
+            if (facingNode.Value)
+            {
+                direction = (direction + 90) % 360;
+            }
+        }
+
+        guardPosition = facing;
+        var pair = (guardPosition.X, guardPosition.Y, direction);
+        if (visitedPairs.Contains(pair))
+        {
+            return null;
+        }
+        visitedPairs.Add(pair);
+    }
+}
+
+bool Evaluate2()
+{
+    var visitedPairs = new HashSet<uint>();
     var direction = 0;
     (int X, int Y) guardPosition = (start.Item1, start.Item2);
     while (true)
@@ -245,7 +278,7 @@ void PrintGrid<T>(T[][] grid)
         var facingNode = TryGetNode(facing.X, facing.Y);
         if (facingNode == null)
         {
-            return (false, visitedPairs);
+            return false;
         }
         var deepBreak = false;
         while (facingNode.Value)
@@ -259,13 +292,13 @@ void PrintGrid<T>(T[][] grid)
             //    break; //exiting
             //}
         }
-        if (deepBreak) { return (false, visitedPairs); }
+        if (deepBreak) { return false; }
 
         guardPosition = facing;
-        var pair = (guardPosition.X, guardPosition.Y, direction);
+        var pair = (uint)(guardPosition.X + guardPosition.Y * 131 + direction * 17_161);
         if (visitedPairs.Contains(pair))
         {
-            return (true, null);
+            return true;
         }
         visitedPairs.Add(pair);
     }
