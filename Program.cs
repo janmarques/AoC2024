@@ -1,4 +1,6 @@
-﻿var fullInput =
+﻿using System.Threading.Tasks.Dataflow;
+
+var fullInput =
 @"..........#.............................#...............#...........#....................#...........#............................
 ..............................#.......#...#.....#.....#...............#.#..#.......................#............#.................
 .............#...........#.#........#............#..........................#.........#.......#......#............................
@@ -155,75 +157,72 @@ var lines = input.Split(Environment.NewLine);
 var height = lines.Count();
 var width = lines[0].Length;
 
-var grid = new Node[width, height];
-var nodes = new List<Node>();
-var y = 0;
+var grid = new bool[width, height];
 var start = (-1, -1);
-foreach (var line in lines)
 {
-    var x = 0;
-    foreach (var item in line)
+    var y = 0;
+    foreach (var line in lines)
     {
-        grid[x, y] = new Node { X = x, Y = y, Value = item };
-        nodes.Add(new Node { X = x, Y = y, Value = item });
-        if (item == '^')
+        var x = 0;
+        foreach (var item in line)
         {
-            start = (x, y);
+            grid[x, y] = item == '#';
+            if (item == '^')
+            {
+                start = (x, y);
+            }
+            x++;
         }
-        x++;
+        y++;
     }
-    y++;
 }
 
-int i = 0;
-var count = nodes.Where(x => x.Value == '.').Count();
-foreach (var node in grid)
+for (int x = 0; x < width; x++)
 {
-    if (node.Value != '.') { continue; }
-    i++;
-    Console.WriteLine($"{i} / {count}: {result}");
-    node.Value = '#';
-
-    var visitedPairs = new HashSet<uint>();
-    var direction = 0;
-    var guardNode = grid[start.Item1, start.Item2];
-    while (true)
+    for (int y = 0; y < height; y++)
     {
-        var facing = GetNext(guardNode.X, guardNode.Y, direction);
-        var facingNode = TryGetNode(facing.X, facing.Y);
-        if (facingNode == null)
+        if (grid[x, y]) { continue; }
+        grid[x, y] = true;
+
+        var visitedPairs = new HashSet<uint>();
+        var direction = 0;
+        (int X, int Y) guardPosition = (start.Item1, start.Item2);
+        while (true)
         {
-            break;
-        }
-        if (facingNode.Value == '#')
-        {
-        rotate:
-            direction = (direction + 90) % 360;
-            facing = GetNext(guardNode.X, guardNode.Y, direction);
-            facingNode = TryGetNode(facing.X, facing.Y);
+            var facing = GetNext(guardPosition.X, guardPosition.Y, direction);
+            var facingNode = TryGetNode(facing.X, facing.Y);
             if (facingNode == null)
             {
-                break; //exiting
+                break;
             }
-            if (facingNode.Value == '#')
+            var deepBreak = false;
+            while (facingNode.Value)
             {
-                goto rotate;
+                direction = (direction + 90) % 360;
+                facing = GetNext(guardPosition.X, guardPosition.Y, direction);
+                facingNode = TryGetNode(facing.X, facing.Y);
+                //if (facingNode == null) // unreachable edgecase?
+                //{
+                //    deepBreak = true;
+                //    break; //exiting
+                //}
             }
+            if (deepBreak) { break; }
+            var pair = (uint)(guardPosition.X + guardPosition.Y * 131 + facing.X * 17_161 + facing.Y * 2_248_091);
+            if (visitedPairs.Contains(pair))
+            {
+                result++;
+                break;
+            }
+            visitedPairs.Add(pair);
+            guardPosition = facing;
         }
-        var pair = (uint)(guardNode.X + guardNode.Y * 131 + facingNode.X * 17_161 + facingNode.Y * 2_248_091);
-        if (visitedPairs.Contains(pair))
-        {
-            result++;
-            break;
-        }
-        visitedPairs.Add(pair);
-        guardNode = facingNode;
-    }
 
-    node.Value = '.';
+        grid[x, y] = false;
+    }
 }
 
-Node TryGetNode(int x, int y)
+bool? TryGetNode(int x, int y)
 {
     if (x < 0 || y < 0) { return null; }
     if (x >= width || y >= height) { return null; }
@@ -264,13 +263,4 @@ void PrintGrid<T>(T[][] grid)
         }
         Console.WriteLine();
     }
-}
-
-
-
-class Node
-{
-    public int X { get; set; }
-    public int Y { get; set; }
-    public char Value { get; set; }
 }
