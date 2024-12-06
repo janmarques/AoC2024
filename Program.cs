@@ -177,49 +177,18 @@ var start = (-1, -1);
     }
 }
 
-for (int x = 0; x < width; x++)
+var potentialBlockages = Evaluate().Item2.Select(x => (x.X, x.Y)).Distinct();
+foreach (var potentialBlockage in potentialBlockages)
 {
-    for (int y = 0; y < height; y++)
+    var (x, y) = potentialBlockage;
+    if (grid[x, y]) { continue; }
+    grid[x, y] = true;
+    if (Evaluate().Item1)
     {
-        if (grid[x, y]) { continue; }
-        grid[x, y] = true;
-
-        var visitedPairs = new HashSet<uint>();
-        var direction = 0;
-        (int X, int Y) guardPosition = (start.Item1, start.Item2);
-        while (true)
-        {
-            var facing = GetNext(guardPosition.X, guardPosition.Y, direction);
-            var facingNode = TryGetNode(facing.X, facing.Y);
-            if (facingNode == null)
-            {
-                break;
-            }
-            var deepBreak = false;
-            while (facingNode.Value)
-            {
-                direction = (direction + 90) % 360;
-                facing = GetNext(guardPosition.X, guardPosition.Y, direction);
-                facingNode = TryGetNode(facing.X, facing.Y);
-                //if (facingNode == null) // unreachable edgecase?
-                //{
-                //    deepBreak = true;
-                //    break; //exiting
-                //}
-            }
-            if (deepBreak) { break; }
-            var pair = (uint)(guardPosition.X + guardPosition.Y * 131 + facing.X * 17_161 + facing.Y * 2_248_091);
-            if (visitedPairs.Contains(pair))
-            {
-                result++;
-                break;
-            }
-            visitedPairs.Add(pair);
-            guardPosition = facing;
-        }
-
-        grid[x, y] = false;
+        result++;
     }
+
+    grid[x, y] = false;
 }
 
 bool? TryGetNode(int x, int y)
@@ -262,5 +231,42 @@ void PrintGrid<T>(T[][] grid)
             Console.Write(grid[i][j]);
         }
         Console.WriteLine();
+    }
+}
+
+(bool, HashSet<(int X, int Y, int Direction)>) Evaluate()
+{
+    var visitedPairs = new HashSet<(int X, int Y, int Direction)>();
+    var direction = 0;
+    (int X, int Y) guardPosition = (start.Item1, start.Item2);
+    while (true)
+    {
+        var facing = GetNext(guardPosition.X, guardPosition.Y, direction);
+        var facingNode = TryGetNode(facing.X, facing.Y);
+        if (facingNode == null)
+        {
+            return (false, visitedPairs);
+        }
+        var deepBreak = false;
+        while (facingNode.Value)
+        {
+            direction = (direction + 90) % 360;
+            facing = GetNext(guardPosition.X, guardPosition.Y, direction);
+            facingNode = TryGetNode(facing.X, facing.Y);
+            //if (facingNode == null) // unreachable edgecase?
+            //{
+            //    deepBreak = true;
+            //    break; //exiting
+            //}
+        }
+        if (deepBreak) { return (false, visitedPairs); }
+
+        guardPosition = facing;
+        var pair = (guardPosition.X, guardPosition.Y, direction);
+        if (visitedPairs.Contains(pair))
+        {
+            return (true, null);
+        }
+        visitedPairs.Add(pair);
     }
 }
