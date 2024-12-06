@@ -158,6 +158,7 @@ var width = lines[0].Length;
 var grid = new Node[width, height];
 var nodes = new List<Node>();
 var y = 0;
+var start = (-1, -1);
 foreach (var line in lines)
 {
     var x = 0;
@@ -165,35 +166,70 @@ foreach (var line in lines)
     {
         grid[x, y] = new Node { X = x, Y = y, Value = item };
         nodes.Add(new Node { X = x, Y = y, Value = item });
+        if (item == '^')
+        {
+            start = (x, y);
+        }
         x++;
     }
     y++;
 }
 
-var visited = new HashSet<Node>();
-var direction = 0;
-var guardNode = nodes.Single(x => x.Value == '^');
-visited.Add(guardNode);
-while (true)
+int i = 0;
+var count = nodes.Where(x => x.Value == '.').Count();
+foreach (var node in grid)
 {
-    var facing = GetNext(guardNode.X, guardNode.Y, direction);
-    var facingNode = nodes.SingleOrDefault(n => n.X == facing.X && n.Y == facing.Y);
-    if (facingNode == null) { break; }
-    if (facingNode.Value == '#')
+    if (node.Value != '.') { continue; }
+    i++;
+    Console.WriteLine($"{i} / {count}: {result}");
+    node.Value = '#';
+
+    var visitedPairs = new HashSet<uint>();
+    var direction = 0;
+    var guardNode = grid[start.Item1, start.Item2];
+    while (true)
     {
-        direction = (direction + 90) % 360;
-        facing = GetNext(guardNode.X, guardNode.Y, direction);
-        facingNode = nodes.SingleOrDefault(n => n.X == facing.X && n.Y == facing.Y);
+        var facing = GetNext(guardNode.X, guardNode.Y, direction);
+        var facingNode = TryGetNode(facing.X, facing.Y);
         if (facingNode == null)
         {
             break;
         }
+        if (facingNode.Value == '#')
+        {
+        rotate:
+            direction = (direction + 90) % 360;
+            facing = GetNext(guardNode.X, guardNode.Y, direction);
+            facingNode = TryGetNode(facing.X, facing.Y);
+            if (facingNode == null)
+            {
+                break; //exiting
+            }
+            if (facingNode.Value == '#')
+            {
+                goto rotate;
+            }
+        }
+        var pair = (uint)(guardNode.X + guardNode.Y * 131 + facingNode.X * 17_161 + facingNode.Y * 2_248_091);
+        if (visitedPairs.Contains(pair))
+        {
+            result++;
+            break;
+        }
+        visitedPairs.Add(pair);
+        guardNode = facingNode;
     }
-    guardNode = facingNode;
-    visited.Add(guardNode);
+
+    node.Value = '.';
 }
 
-result = visited.Count;
+Node TryGetNode(int x, int y)
+{
+    if (x < 0 || y < 0) { return null; }
+    if (x >= width || y >= height) { return null; }
+    return grid[x, y];
+}
+
 
 (int X, int Y) GetNext(int x, int y, int direction)
 {
@@ -213,7 +249,7 @@ result = visited.Count;
 }
 
 timer.Stop();
-Console.WriteLine(result);
+Console.WriteLine(result); // 1604
 Console.WriteLine(timer.ElapsedMilliseconds + "ms");
 Console.ReadLine();
 
@@ -229,6 +265,8 @@ void PrintGrid<T>(T[][] grid)
         Console.WriteLine();
     }
 }
+
+
 
 class Node
 {
