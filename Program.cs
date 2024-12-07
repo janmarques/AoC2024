@@ -864,28 +864,64 @@ var smallInput =
 21037: 9 7 18 13
 292: 11 6 16 20";
 
-var smallest = "";
+var smallest = "7290: 6 8 6 15";
 
 var input = smallInput;
-input = fullInput;
-//input = smallest;
+//input = fullInput;
+input = smallest;
 var timer = System.Diagnostics.Stopwatch.StartNew();
 
 var result = 0ul;
-
-var xxx = new BitArray(new[] { 5 });
-var result2 = GetOperatorCombinations(5).Select(x => x.ToList()).ToList();
 
 foreach (var line in input.Split(Environment.NewLine))
 {
     var split = line.Replace(":", "").Split(' ').Select(ulong.Parse);
     var target = split.First();
     var numbers = split.Skip(1);
-    if (Evaluate(target, numbers))
+    if (EvaluateWithConcat(target, numbers))
     {
         result += target;
     }
 }
+
+bool EvaluateWithConcat(ulong expected, IEnumerable<ulong> inputs)
+{
+    var operatorsCollection = GetOperatorCombinations(inputs.Count() - 1);
+    foreach (var operators in operatorsCollection)
+    {
+        var copy = inputs.ToList();
+        var newNumberList = new List<ulong>();
+
+        for (var i = 0; i < copy.Count(); i++)
+        {
+            if (operators.Count() <= i || copy.Count -1 == i)
+            {
+                newNumberList.Add(inputs.ElementAt(i));
+            }
+            else if (operators.ElementAt(i))
+            {
+                var newNumber = ulong.Parse(copy.ElementAt(i).ToString() + copy.ElementAt(i + 1).ToString());
+                newNumberList.Add(newNumber);
+                copy.RemoveAt(i);
+                copy.RemoveAt(i);
+                copy.Insert(i, newNumber);
+                i--;
+            }
+            else
+            {
+                newNumberList.Add(inputs.ElementAt(i));
+            }
+        }
+
+
+        if (Evaluate(expected, newNumberList))
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
 
 bool Evaluate(ulong expected, IEnumerable<ulong> inputs)
 {
