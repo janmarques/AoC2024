@@ -873,40 +873,39 @@ var timer = System.Diagnostics.Stopwatch.StartNew();
 
 var result = 0ul;
 
-var combinationsCache = Enumerable.Range(0, 12).Select(x => GetOperatorCombinations(x).Select(x => x.ToArray()).ToList()).ToArray();
+var combinationsCache = Enumerable.Range(0, 12).Select(x => GetOperatorCombinations(x).Select(x => x.ToList()).ToList()).ToArray();
 
 foreach (var line in input.Split(Environment.NewLine))
 {
-    //Console.WriteLine(line);
+    Console.WriteLine(line);
     var split = line.Replace(":", "").Split(' ').Select(ulong.Parse);
     var target = split.First();
-    var numbers = split.Skip(1).ToArray();
+    var numbers = split.Skip(1);
     if (Evaluate(target, numbers))
     {
         result += target;
     }
 }
 
-bool Evaluate(ulong expected, ulong[] inputs)
+bool Evaluate(ulong expected, IEnumerable<ulong> inputs)
 {
-    var count = Enumerable.Count(inputs);
-    var operatorsCollection = combinationsCache[count - 1];
+    var operatorsCollection = combinationsCache[inputs.Count() - 1];
     foreach (var operators in operatorsCollection)
     {
         var actual = inputs.First();
-        for (var i = 1; i < count; i++)
+        for (var i = 1; i < inputs.Count(); i++)
         {
-            if (!operators[i - 1].HasValue)
+            if (!operators.ElementAt(i - 1).HasValue)
             {
-                actual *= inputs[i];
+                actual *= inputs.ElementAt(i);
             }
-            else if (operators[i - 1].Value)
+            else if (operators.ElementAt(i - 1).Value)
             {
-                actual += inputs[i];
+                actual += inputs.ElementAt(i);
             }
             else
             {
-                actual = (actual * 10 * (ulong)(Math.Log10(actual))) + inputs[i];
+                actual = ulong.Parse(actual.ToString() + inputs.ElementAt(i).ToString());
             }
         }
 
