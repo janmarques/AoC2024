@@ -873,10 +873,11 @@ var timer = System.Diagnostics.Stopwatch.StartNew();
 
 var result = 0ul;
 
+var combinationsCache = Enumerable.Range(0, 12).Select(x => GetOperatorCombinations(x).Select(x => x.ToList()).ToList()).ToArray();
 
 foreach (var line in input.Split(Environment.NewLine))
 {
-    Console.WriteLine(line);
+    //Console.WriteLine(line);
     var split = line.Replace(":", "").Split(' ').Select(ulong.Parse);
     var target = split.First();
     var numbers = split.Skip(1);
@@ -888,11 +889,12 @@ foreach (var line in input.Split(Environment.NewLine))
 
 bool Evaluate(ulong expected, IEnumerable<ulong> inputs)
 {
-    var operatorsCollection = GetOperatorCombinations(inputs.Count() - 1).Select(x => x.ToList()).ToList();
+    var count = Enumerable.Count(inputs);
+    var operatorsCollection = combinationsCache[count - 1];
     foreach (var operators in operatorsCollection)
     {
         var actual = inputs.First();
-        for (var i = 1; i < inputs.Count(); i++)
+        for (var i = 1; i < count; i++)
         {
             if (!operators.ElementAt(i - 1).HasValue)
             {
@@ -904,7 +906,7 @@ bool Evaluate(ulong expected, IEnumerable<ulong> inputs)
             }
             else
             {
-                actual = ulong.Parse(actual.ToString() + inputs.ElementAt(i).ToString());
+                actual = (actual * 10 *  (ulong)(Math.Log10(actual))) + inputs.ElementAt(i);
             }
         }
 
@@ -936,28 +938,7 @@ IEnumerable<bool?> Get2(int number, int minLength)
     }
 }
 
-//https://stackoverflow.com/questions/1952153/what-is-the-best-way-to-find-all-combinations-of-items-in-an-array
-IEnumerable<IEnumerable<T>> GetKCombsWithRept<T>(IEnumerable<T> list, int length) where T : IComparable
-{
-    if (length == 1) return list.Select(t => new T[] { t });
-    return GetKCombsWithRept(list, length - 1)
-        .SelectMany(t => list.Where(o => o.CompareTo(t.Last()) >= 0),
-            (t1, t2) => t1.Concat(new T[] { t2 }));
-}
-
 timer.Stop();
 Console.WriteLine(result);
 Console.WriteLine(timer.ElapsedMilliseconds + "ms");
 Console.ReadLine();
-
-void PrintGrid<T>(T[][] grid)
-{
-    for (int i = 0; i < grid.Length; i++)
-    {
-        for (int j = 0; j < grid[i].Length; j++)
-        {
-            Console.Write(grid[i][j]);
-        }
-        Console.WriteLine();
-    }
-}
