@@ -875,9 +875,8 @@ var result = 0ul;
 
 var combinationsCache = Enumerable.Range(0, 12).Select(x => GetOperatorCombinations(x).Select(x => x.ToArray()).ToList()).ToArray();
 
-foreach (var line in input.Split(Environment.NewLine))
+Parallel.ForEach(input.Split(Environment.NewLine), line =>
 {
-    //Console.WriteLine(line);
     var split = line.Replace(":", "").Split(' ').Select(ulong.Parse);
     var target = split.First();
     var numbers = split.Skip(1).ToArray();
@@ -885,7 +884,18 @@ foreach (var line in input.Split(Environment.NewLine))
     {
         result += target;
     }
-}
+});
+//foreach (var line in input.Split(Environment.NewLine))
+//{
+//    //Console.WriteLine(line);
+//    var split = line.Replace(":", "").Split(' ').Select(ulong.Parse);
+//    var target = split.First();
+//    var numbers = split.Skip(1).ToArray();
+//    if (Evaluate(target, numbers))
+//    {
+//        result += target;
+//    }
+//}
 
 bool Evaluate(ulong expected, ulong[] inputs)
 {
