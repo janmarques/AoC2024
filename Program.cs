@@ -908,12 +908,18 @@ bool Evaluate(ulong expected, ulong[] inputs)
             {
                 actual = (actual * (ulong)Math.Pow(10, (Math.Ceiling(Math.Log10(inputs[i] + 1))))) + inputs[i];
             }
+
+            if (actual > expected)
+            {
+                goto next;
+            }
         }
 
         if (actual == expected)
         {
             return true;
         }
+    next:;
     }
     return false;
 }
