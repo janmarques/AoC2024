@@ -892,24 +892,20 @@ bool EvaluateWithConcat(ulong expected, IEnumerable<ulong> inputs)
         var copy = inputs.ToList();
         var newNumberList = new List<ulong>();
 
-        for (var i = 0; i < copy.Count(); i++)
+        for (var i = copy.Count() - 1; i >= 0; i--)
         {
-            if (operators.Count() <= i || copy.Count -1 == i)
+            if (i == 0 || operators.ElementAt(i - 1))
             {
                 newNumberList.Add(inputs.ElementAt(i));
-            }
-            else if (operators.ElementAt(i))
-            {
-                var newNumber = ulong.Parse(copy.ElementAt(i).ToString() + copy.ElementAt(i + 1).ToString());
-                newNumberList.Add(newNumber);
-                copy.RemoveAt(i);
-                copy.RemoveAt(i);
-                copy.Insert(i, newNumber);
-                i--;
             }
             else
             {
-                newNumberList.Add(inputs.ElementAt(i));
+                var newNumber = ulong.Parse(copy.ElementAt(i - 1).ToString() + copy.ElementAt(i).ToString());
+                newNumberList.Insert(0, newNumber);
+                copy.RemoveAt(i);
+                copy.RemoveAt(i-1);
+                copy.Insert(i-1, newNumber);
+                i--;
             }
         }
 
