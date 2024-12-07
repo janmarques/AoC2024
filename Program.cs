@@ -1,4 +1,7 @@
-﻿var fullInput =
+﻿using System.Collections;
+using static System.Runtime.InteropServices.JavaScript.JSType;
+
+var fullInput =
 @"2382106471: 2 8 175 1 17 3 5 9 4 51 5
 864708004: 278 22 259 2 12 3
 1659517050: 33 8 9 673 51 967
@@ -864,15 +867,83 @@ var smallInput =
 var smallest = "";
 
 var input = smallInput;
-//input = fullInput;
+input = fullInput;
 //input = smallest;
 var timer = System.Diagnostics.Stopwatch.StartNew();
 
-var result = 0;
+var result = 0ul;
+
+var xxx = new BitArray(new[] { 5 });
+var result2 = GetOperatorCombinations(5).Select(x => x.ToList()).ToList();
 
 foreach (var line in input.Split(Environment.NewLine))
 {
+    var split = line.Replace(":", "").Split(' ').Select(ulong.Parse);
+    var target = split.First();
+    var numbers = split.Skip(1);
+    if (Evaluate(target, numbers))
+    {
+        result += target;
+    }
+}
 
+bool Evaluate(ulong expected, IEnumerable<ulong> inputs)
+{
+    var operatorsCollection = GetOperatorCombinations(inputs.Count() - 1);
+    foreach (var operators in operatorsCollection)
+    {
+        var actual = inputs.First();
+        for (var i = 1; i < inputs.Count(); i++)
+        {
+            if (operators.ElementAt(i - 1))
+            {
+                actual *= inputs.ElementAt(i);
+            }
+            else
+            {
+                actual += inputs.ElementAt(i);
+            }
+        }
+
+        if (actual == expected)
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+IEnumerable<IEnumerable<bool>> GetOperatorCombinations(int v)
+{
+    for (int i = 0; i <= Math.Pow(2, v); i++)
+    {
+        yield return Get2(i, v);
+    }
+}
+
+IEnumerable<bool> Get2(int number, int minLength)
+{
+    var bits = new BitArray(new[] { number });
+    for (int i = 0; i < minLength; i++)
+    {
+        if (i < number)
+        {
+            yield return bits[i];
+        }
+        else
+        {
+            yield return false;
+        }
+    }
+}
+
+//https://stackoverflow.com/questions/1952153/what-is-the-best-way-to-find-all-combinations-of-items-in-an-array
+IEnumerable<IEnumerable<T>> GetKCombsWithRept<T>(IEnumerable<T> list, int length) where T : IComparable
+{
+    if (length == 1) return list.Select(t => new T[] { t });
+    return GetKCombsWithRept(list, length - 1)
+        .SelectMany(t => list.Where(o => o.CompareTo(t.Last()) >= 0),
+            (t1, t2) => t1.Concat(new T[] { t2 }));
 }
 
 timer.Stop();
