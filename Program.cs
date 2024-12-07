@@ -867,73 +867,44 @@ var smallInput =
 var smallest = "7290: 6 8 6 15";
 
 var input = smallInput;
-//input = fullInput;
-input = smallest;
+input = fullInput;
+//input = smallest;
 var timer = System.Diagnostics.Stopwatch.StartNew();
 
 var result = 0ul;
 
+
 foreach (var line in input.Split(Environment.NewLine))
 {
+    Console.WriteLine(line);
     var split = line.Replace(":", "").Split(' ').Select(ulong.Parse);
     var target = split.First();
     var numbers = split.Skip(1);
-    if (EvaluateWithConcat(target, numbers))
+    if (Evaluate(target, numbers))
     {
         result += target;
     }
 }
 
-bool EvaluateWithConcat(ulong expected, IEnumerable<ulong> inputs)
-{
-    var operatorsCollection = GetOperatorCombinations(inputs.Count() - 1);
-    foreach (var operators in operatorsCollection)
-    {
-        var copy = inputs.ToList();
-        var newNumberList = new List<ulong>();
-
-        for (var i = copy.Count() - 1; i >= 0; i--)
-        {
-            if (i == 0 || operators.ElementAt(i - 1))
-            {
-                newNumberList.Add(inputs.ElementAt(i));
-            }
-            else
-            {
-                var newNumber = ulong.Parse(copy.ElementAt(i - 1).ToString() + copy.ElementAt(i).ToString());
-                newNumberList.Insert(0, newNumber);
-                copy.RemoveAt(i);
-                copy.RemoveAt(i-1);
-                copy.Insert(i-1, newNumber);
-                i--;
-            }
-        }
-
-
-        if (Evaluate(expected, newNumberList))
-        {
-            return true;
-        }
-    }
-    return false;
-}
-
-
 bool Evaluate(ulong expected, IEnumerable<ulong> inputs)
 {
-    var operatorsCollection = GetOperatorCombinations(inputs.Count() - 1);
+    var operatorsCollection = GetOperatorCombinations(inputs.Count() - 1).Select(x => x.ToList()).ToList();
     foreach (var operators in operatorsCollection)
     {
         var actual = inputs.First();
         for (var i = 1; i < inputs.Count(); i++)
         {
-            if (operators.ElementAt(i - 1))
+            if (!operators.ElementAt(i - 1).HasValue)
             {
                 actual *= inputs.ElementAt(i);
             }
-            else
+            else if (operators.ElementAt(i - 1).Value)
             {
                 actual += inputs.ElementAt(i);
+            }
+            else
+            {
+                actual = ulong.Parse(actual.ToString() + inputs.ElementAt(i).ToString());
             }
         }
 
@@ -945,27 +916,23 @@ bool Evaluate(ulong expected, IEnumerable<ulong> inputs)
     return false;
 }
 
-IEnumerable<IEnumerable<bool>> GetOperatorCombinations(int v)
+IEnumerable<IEnumerable<bool?>> GetOperatorCombinations(int v)
 {
-    for (int i = 0; i <= Math.Pow(2, v); i++)
+    for (int i = 0; i <= Math.Pow(3, v); i++)
     {
         yield return Get2(i, v);
     }
 }
 
-IEnumerable<bool> Get2(int number, int minLength)
+IEnumerable<bool?> Get2(int number, int minLength)
 {
-    var bits = new BitArray(new[] { number });
     for (int i = 0; i < minLength; i++)
     {
-        if (i < number)
-        {
-            yield return bits[i];
-        }
-        else
-        {
-            yield return false;
-        }
+        var remainder = number % 3;
+        if (remainder == 0) { yield return false; }
+        if (remainder == 1) { yield return true; }
+        if (remainder == 2) { yield return null; }
+        number /= 3;
     }
 }
 
