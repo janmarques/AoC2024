@@ -67,7 +67,7 @@ var smallInput =
 var smallest = "";
 
 var input = smallInput;
-//input = fullInput;
+input = fullInput;
 //input = smallest;
 var timer = System.Diagnostics.Stopwatch.StartNew();
 
@@ -77,7 +77,7 @@ var lines = input.Split(Environment.NewLine);
 var height = lines.Count();
 var width = lines[0].Length;
 
-var grid = new Node[width, height];
+var grid = new List<Node>();
 
 {
     var y = 0;
@@ -87,37 +87,49 @@ var grid = new Node[width, height];
         foreach (var item in line)
         {
             var value = item == '#' ? '.' : item;
-            grid[x, y] = new Node { Value = value, X = x, Y = y };
+            grid.Add(new Node { Value = value, X = x, Y = y });
             x++;
         }
         y++;
     }
 }
 
-PrintGrid(grid);
+foreach (var antennaGrp in grid.Where(x => x.Value != '.').GroupBy(x => x.Value))
+{
+    foreach (var antenna in antennaGrp)
+    {
+        foreach (var otherAntenna in antennaGrp)
+        {
+            if (antenna == otherAntenna) { continue; }
+            var xDiff = antenna.X - otherAntenna.X;
+            var yDiff = antenna.Y - otherAntenna.Y;
+            var antinode1 = grid.SingleOrDefault(n => n.X == (antenna.X + xDiff) && n.Y == (antenna.Y + yDiff));
+            if (antinode1 != null)
+            {
+                antinode1.IsAntiNode = true;
+            }
+
+            //var antinode2 = grid.SingleOrDefault(n => n.X == (otherAntenna.X - xDiff) && n.Y == (otherAntenna.Y - yDiff));
+            //if (antinode2 != null)
+            //{
+            //    antinode2.IsAntiNode = true;
+            //}
+        }
+    }
+}
+
+result = grid.Count(x => x.IsAntiNode);
+
 timer.Stop();
 Console.WriteLine(result);
 Console.WriteLine(timer.ElapsedMilliseconds + "ms");
 Console.ReadLine();
-
-
-void PrintGrid<T>(T[,] grid)
-{
-    for (int i = 0; i < grid.GetLength(0); i++)
-    {
-        for (int j = 0; j < grid.GetLength(1); j++)
-        {
-            Console.Write(grid[i,j]);
-        }
-        Console.WriteLine();
-    }
-}
 
 class Node
 {
     public int X { get; set; }
     public int Y { get; set; }
     public char Value { get; set; }
-    public int IsAntiNode { get; set; }
+    public bool IsAntiNode { get; set; }
     public override string ToString() => Value.ToString();
 }
