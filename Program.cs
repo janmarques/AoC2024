@@ -103,13 +103,13 @@ foreach (var antennaGrp in grid.Where(x => x.Value != '.').GroupBy(x => x.Value)
             if (antenna == otherAntenna) { continue; }
             var xDiff = antenna.X - otherAntenna.X;
             var yDiff = antenna.Y - otherAntenna.Y;
-            for (int i = 0; i < 100; i++)
+            int i = 0;
+            while (true)
             {
-                var antinode1 = grid.SingleOrDefault(n => n.X == (antenna.X + i * xDiff) && n.Y == (antenna.Y + i * yDiff));
-                if (antinode1 != null)
-                {
-                    antinode1.IsAntiNode = true;
-                }
+                var antinode = grid.SingleOrDefault(n => n.X == (antenna.X + i * xDiff) && n.Y == (antenna.Y + i * yDiff));
+                if (antinode == null) { break; }
+                antinode.IsAntiNode = true;
+                i++;
             }
         }
     }
