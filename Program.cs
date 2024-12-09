@@ -33,26 +33,44 @@ foreach (var number in input.Select(x => x.ToString()).Select(int.Parse))
     k++;
 }
 
-foreach (var left in diskMap)
+//foreach (var left in diskMap)
+//{
+//    if(left.Index %1000 == 0) {
+//        Console.WriteLine($"{left.Index} / {diskMap.Count}");
+//    }
+//    //Console.WriteLine(string.Join("", diskMap.Select(x => x.Id?.ToString() ?? ".")));
+
+//    if (left.IsEmpty)
+//    {
+//        var right = diskMap.OrderBy(x => x.Index).Where(x => !x.IsEmpty).Last();
+//        if (left.Index >= right.Index) { break; }
+//        left.Id = right.Id;
+//        left.IsEmpty = false;
+
+//        right.Id = null;
+//        right.IsEmpty = true;
+//        //(right.IsEmpty, left.IsEmpty) = (left.IsEmpty, right.IsEmpty);
+//        //(right.Id, left.Id) = (left.Id, right.Id);
+//    }
+
+//}
+
+while (true)
 {
-    if(left.Index %1000 == 0) {
+
+    var right = diskMap.OrderBy(x => x.Index).Where(x => !x.IsEmpty).Last();
+    var left = diskMap.OrderBy(x => x.Index).Where(x => x.IsEmpty).First();
+
+    if (left.Index % 1000 == 0)
+    {
         Console.WriteLine($"{left.Index} / {diskMap.Count}");
     }
-    //Console.WriteLine(string.Join("", diskMap.Select(x => x.Id?.ToString() ?? ".")));
+    if (left.Index >= right.Index) { break; }
+    left.Id = right.Id;
+    left.IsEmpty = false;
 
-    if (left.IsEmpty)
-    {
-        var right = diskMap.OrderBy(x => x.Index).Where(x => !x.IsEmpty).Last();
-        if (left.Index >= right.Index) { break; }
-        left.Id = right.Id;
-        left.IsEmpty = false;
-
-        right.Id = null;
-        right.IsEmpty = true;
-        //(right.IsEmpty, left.IsEmpty) = (left.IsEmpty, right.IsEmpty);
-        //(right.Id, left.Id) = (left.Id, right.Id);
-    }
-
+    right.Id = null;
+    right.IsEmpty = true;
 }
 
 foreach (var item in diskMap)
@@ -61,15 +79,7 @@ foreach (var item in diskMap)
     result += (item.Index * item.Id.Value);
 }
 
-//while (true)
-//{
-//    var right = diskMap.OrderBy(x => x.Index).Where(x => !x.IsEmpty).Last();
-//    var left = diskMap.OrderBy(x => x.Index).Where(x => x.IsEmpty).First();
-//    if (left.Index == right.Index) { break; }
 
-//    (right.IsEmpty, left.IsEmpty) = (left.IsEmpty, right.IsEmpty);
-//    (right.Id, left.Id) = (left.Id, right.Id);
-//}
 
 //Console.WriteLine(string.Join("", diskMap.Select(x => x.Id?.ToString() ?? ".")));
 
