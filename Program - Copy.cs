@@ -11,7 +11,7 @@
 ////input = smallest;
 //var timer = System.Diagnostics.Stopwatch.StartNew();
 
-//var result = 0;
+//var result = 0l;
 
 //foreach (var line in input.Split(Environment.NewLine))
 //{

@@ -7,11 +7,11 @@ var smallInput =
 var smallest = "12345";
 
 var input = smallInput;
-////input = fullInput;
-input = smallest;
+input = fullInput;
+//input = smallest;
 var timer = System.Diagnostics.Stopwatch.StartNew();
 
-var result = 0;
+var result = 0l;
 
 var diskMap = new List<Block>();
 int k = 0;
@@ -26,25 +26,52 @@ foreach (var number in input.Select(x => x.ToString()).Select(int.Parse))
         }
         else
         {
-            diskMap.Add(new Block { Id = k / 2, Index = k });
+            diskMap.Add(new Block { Id = k / 2, Index = index });
         }
         index++;
     }
     k++;
 }
 
-
-while (true)
+foreach (var left in diskMap)
 {
-    var right = diskMap.Where(x => !x.IsEmpty).Last();
-    var left = diskMap.Where(x => x.IsEmpty).First();
-    if (left.Index > right.Index) { break; }
+    if(left.Index %1000 == 0) {
+        Console.WriteLine($"{left.Index} / {diskMap.Count}");
+    }
+    //Console.WriteLine(string.Join("", diskMap.Select(x => x.Id?.ToString() ?? ".")));
 
-    (right.IsEmpty, left.IsEmpty) = (left.IsEmpty, right.IsEmpty);
-    (right.Id, left.Id) = (left.Id, right.Id);
+    if (left.IsEmpty)
+    {
+        var right = diskMap.OrderBy(x => x.Index).Where(x => !x.IsEmpty).Last();
+        if (left.Index >= right.Index) { break; }
+        left.Id = right.Id;
+        left.IsEmpty = false;
+
+        right.Id = null;
+        right.IsEmpty = true;
+        //(right.IsEmpty, left.IsEmpty) = (left.IsEmpty, right.IsEmpty);
+        //(right.Id, left.Id) = (left.Id, right.Id);
+    }
+
 }
 
-Console.WriteLine(string.Join("", diskMap.Select(x => x.Id?.ToString() ?? ".")));
+foreach (var item in diskMap)
+{
+    if (item.IsEmpty) { break; }
+    result += (item.Index * item.Id.Value);
+}
+
+//while (true)
+//{
+//    var right = diskMap.OrderBy(x => x.Index).Where(x => !x.IsEmpty).Last();
+//    var left = diskMap.OrderBy(x => x.Index).Where(x => x.IsEmpty).First();
+//    if (left.Index == right.Index) { break; }
+
+//    (right.IsEmpty, left.IsEmpty) = (left.IsEmpty, right.IsEmpty);
+//    (right.Id, left.Id) = (left.Id, right.Id);
+//}
+
+//Console.WriteLine(string.Join("", diskMap.Select(x => x.Id?.ToString() ?? ".")));
 
 timer.Stop();
 Console.WriteLine(result);
