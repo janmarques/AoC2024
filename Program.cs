@@ -55,31 +55,58 @@ foreach (var number in input.Select(x => x.ToString()).Select(int.Parse))
 
 //}
 
-while (true)
+var ids = diskMap.Select(x => x.Id).Distinct().OrderByDescending(x => x);
+
+var empties = new Dictionary<(int startPosition, int length), List<Block>>();
+
+for (int i = 0; i < diskMap.Count; i++)
 {
+    var item = diskMap[i];
+    if (!item.IsEmpty) { continue; }
+    var tmpEmptyBlock = diskMap.Where(x => x.Index >= item.Index).TakeWhile(x => x.IsEmpty).ToList();
+    empties.Add((i, tmpEmptyBlock.Count), tmpEmptyBlock);
+    i += tmpEmptyBlock.Count - 1;
+}
 
-    var right = diskMap.OrderBy(x => x.Index).Where(x => !x.IsEmpty).Last();
-    var left = diskMap.OrderBy(x => x.Index).Where(x => x.IsEmpty).First();
-
-    if (left.Index % 1000 == 0)
+foreach (var id in ids)
+{
+    if (id % 100 == 0)
     {
-        Console.WriteLine($"{left.Index} / {diskMap.Count}");
+        Console.WriteLine($"{id} / {ids.Count()} / {timer.ElapsedMilliseconds}");
+        timer.Restart();
     }
-    if (left.Index >= right.Index) { break; }
-    left.Id = right.Id;
-    left.IsEmpty = false;
+    //Console.WriteLine(string.Join("", diskMap.Select(x => x.Id?.ToString() ?? ".")));
 
-    right.Id = null;
-    right.IsEmpty = true;
+    var rightChunk = diskMap.Where(x => x.Id == id).ToList();
+
+    var toTheLeft = diskMap.Where(x => x.Index < rightChunk.First().Index);
+    var emptyBlock = empties.Where(x => x.Key.length >= rightChunk.Count && x.Key.startPosition < rightChunk.First().Index).FirstOrDefault();
+    if (emptyBlock.Key == default) { continue; }
+    empties.Remove(emptyBlock.Key);
+
+    var spaceLeft = emptyBlock.Value.Count - rightChunk.Count;
+    if (spaceLeft > 0)
+    {
+        var newSpace = emptyBlock.Value.Skip(rightChunk.Count).ToList();
+        empties.Add((newSpace.First().Index, newSpace.Count), newSpace);
+    }
+
+    var count = rightChunk.Count();
+    for (int i = 0; i < count; i++)
+    {
+        emptyBlock.Value.ElementAt(i).Id = id;
+        emptyBlock.Value.ElementAt(i).IsEmpty = false;
+
+        rightChunk.ElementAt(i).Id = null;
+        rightChunk.ElementAt(i).IsEmpty = true;
+    }
 }
 
 foreach (var item in diskMap)
 {
-    if (item.IsEmpty) { break; }
+    if (item.IsEmpty) { continue; }
     result += (item.Index * item.Id.Value);
 }
-
-
 
 //Console.WriteLine(string.Join("", diskMap.Select(x => x.Id?.ToString() ?? ".")));
 
