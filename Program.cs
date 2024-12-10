@@ -69,7 +69,7 @@ var directions = new[] { new[] { 0, 1 }, new[] { 0, -1 }, new[] { 1, 0 }, new[] 
 var grid = input.Split(Environment.NewLine).Select(x => x.Select(y => y == '.' ? -1 : int.Parse(y.ToString())).ToArray()).ToArray();
 var height = grid.Length;
 var width = grid[0].Length;
-var results = new HashSet<(int, int, int, int)>();
+//var results = new HashSet<(int, int, int, int)>();
 for (int y = 0; y < height; y++)
 {
     for (int x = 0; x < width; x++)
@@ -86,7 +86,8 @@ void Navigate(int x, int y, int startX, int startY)
     var value = grid[x][y];
     if (value == 9)
     {
-        results.Add((startX, startY, x, y));
+        result++;
+        //results.Add((startX, startY, x, y));
         return;
     }
     foreach (var direction in directions)
@@ -103,7 +104,7 @@ void Navigate(int x, int y, int startX, int startY)
 
 }
 
-result = results.Count;
+//result = results.Count;
 timer.Stop();
 Console.WriteLine(result);
 Console.WriteLine(timer.ElapsedMilliseconds + "ms");
