@@ -34,7 +34,7 @@ for (int i = 0; i <= depth; i++)
 }
 
 
-long DeepBlink(long[] numbers, int depthLeft)
+long DeepBlink(IEnumerable<long> numbers, int depthLeft)
 {
     var key = (string.Join("|", numbers), depthLeft);
     if (!dct.ContainsKey(key))
@@ -47,7 +47,7 @@ long DeepBlink(long[] numbers, int depthLeft)
         }
         else
         {
-            cacheResult = numbers.Sum(x => DeepBlink(Blink(x).ToArray(), depthLeft - 1));
+            cacheResult = numbers.Sum(x => DeepBlink(Blink(x), depthLeft - 1));
         }
         dct[key] = cacheResult;
     }
