@@ -14,28 +14,25 @@ var depth = 25;
 
 var timer = System.Diagnostics.Stopwatch.StartNew();
 
-var result = 0l;
+var result = 0ul;
 
 var stones = input.Split(' ').Select(ulong.Parse).ToList();
+
+
 foreach (var stone in stones)
 {
-    DeepBlink(new[] { stone }, depth);
+    result += (ulong)DeepBlink(new[] { stone }, depth);
+    Console.WriteLine(stone);
 }
 
 
-void DeepBlink(IEnumerable<ulong> numbers, int depthLeft)
+int DeepBlink(ulong[] numbers, int depthLeft)
 {
     if (depthLeft == 0)
     {
-        Console.Write(" " +string.Join(" ", numbers));
-        result += numbers.Count();
-        return;
+        return numbers.Count();
     }
-    foreach (var number in numbers)
-    {
-        var subNumbers = Blink(number);
-        DeepBlink(subNumbers, depthLeft - 1);
-    }
+    return numbers.Sum(x => DeepBlink(Blink(x).ToArray(), depthLeft - 1));
 }
 
 IEnumerable<ulong> Blink(ulong number)
