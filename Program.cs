@@ -1,123 +1,64 @@
 ﻿var fullInput =
-@"8980123016789892101689654329890101234676
-7878034525430783098798710018765210965589
-0169019630121654101607629897654349876439
-1252108749236543212512534785456438732128
-0343219658747865103403445674307623642017
-4304378767656974234765430543218914551006
-3210478010234983165891021657801806562345
-4981569320105072074322780786918987078967
-5672389437656101289013691095107876121258
-8765476598587292993234542384212345430349
-9651062303494387870105033473021058965432
-2342321212345676543276124562198769873451
-1103430907658789010189210890345678012360
-0234567898349654123678001701239987109876
-4321098701234563234567115654378103210987
-5696545670123654098943278521269210349567
-6787430987098743107654569430354321058438
-5612321078123812234543210348741034567629
-2500110569014901225621001259612987859210
-1043223489905430310734308766503456988765
-2158965676876129429865219823439567873450
-3067834385987098510556923219878710564321
-4786321294306787623457812308701601450654
-5695410105217896501569908455612532321703
-6787801234326903432678789964103445499812
-5108943105695212765410654873213456781210
-0237652098784303890321303898102387670349
-1247891034510789081010212743201098581458
-0356780123623692132321301650120123498767
-9456692101704543545410456788761212329450
-8767543289813032106998743899654300210321
-7898654176522123677867012101076541101765
-6765467087437054789851231032987432217894
-5410308292348965670340342347878924300123
-4323219101437434981230659456569015423232
-1098565456546321876521768765433456714981
-2787672347435430101419859874322347805670
-3690181678921015612301348123011098945668
-4521090589011056787652210023452787434789
-5432183432102345898543101110567898543210";
+@"2701 64945 0 9959979 93 781524 620 1";
 
 var smallInput =
-@"89010123
-78121874
-87430965
-96549874
-45678903
-32019012
-01329801
-10456732";
+@"125 17";
 
-var smallest = @"..90..9
-...1.98
-...2..7
-6543456
-765.987
-876....
-987....";
+var smallest = "0 1 10 99 999";
 
 var input = smallInput;
 input = fullInput;
 //input = smallest;
+var depth = 25;
+
+
 var timer = System.Diagnostics.Stopwatch.StartNew();
 
 var result = 0l;
 
-var directions = new[] { new[] { 0, 1 }, new[] { 0, -1 }, new[] { 1, 0 }, new[] { -1, 0 } };
-var grid = input.Split(Environment.NewLine).Select(x => x.Select(y => y == '.' ? -1 : int.Parse(y.ToString())).ToArray()).ToArray();
-var height = grid.Length;
-var width = grid[0].Length;
-//var results = new HashSet<(int, int, int, int)>();
-for (int y = 0; y < height; y++)
+var stones = input.Split(' ').Select(ulong.Parse).ToList();
+foreach (var stone in stones)
 {
-    for (int x = 0; x < width; x++)
-    {
-        if (grid[x][y] == 0)
-        {
-            Navigate(x, y, x, y);
-        }
-    }
+    DeepBlink(new[] { stone }, depth);
 }
 
-void Navigate(int x, int y, int startX, int startY)
+
+void DeepBlink(IEnumerable<ulong> numbers, int depthLeft)
 {
-    var value = grid[x][y];
-    if (value == 9)
+    if (depthLeft == 0)
     {
-        result++;
-        //results.Add((startX, startY, x, y));
+        Console.Write(" " +string.Join(" ", numbers));
+        result += numbers.Count();
         return;
     }
-    foreach (var direction in directions)
+    foreach (var number in numbers)
     {
-        var otherX = direction[0] + x;
-        var otherY = direction[1] + y;
-        if (otherX < 0 || otherY < 0 || otherX >= width || otherY >= height) { continue; }
-        var otherValue = grid[otherX][otherY];
-        if (otherValue == value + 1)
-        {
-            Navigate(otherX, otherY, startX, startY);
-        }
+        var subNumbers = Blink(number);
+        DeepBlink(subNumbers, depthLeft - 1);
     }
-
 }
 
-//result = results.Count;
+IEnumerable<ulong> Blink(ulong number)
+{
+    if (number == 0)
+    {
+        yield return 1;
+        yield break;
+    }
+    var digits = Math.Ceiling(Math.Log10(number + 1));
+    if (digits % 2 == 0)
+    {
+        yield return number / (ulong)Math.Pow(10, digits / 2);
+        yield return number % (ulong)Math.Pow(10, digits / 2);
+    }
+    else
+    {
+        yield return number * 2024;
+    }
+}
+
 timer.Stop();
-Console.WriteLine(result);
+Console.WriteLine();
+Console.WriteLine(result); // 154498 too low
 Console.WriteLine(timer.ElapsedMilliseconds + "ms");
 Console.ReadLine();
-
-void PrintGrid<T>(T[][] grid)
-{
-    for (int i = 0; i < grid.Length; i++)
-    {
-        for (int j = 0; j < grid[i].Length; j++)
-        {
-            Console.Write(grid[i][j]);
-        }
-        Console.WriteLine();
-    }
-}
