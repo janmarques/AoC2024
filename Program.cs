@@ -9,33 +9,52 @@ var smallest = "0 1 10 99 999";
 var input = smallInput;
 input = fullInput;
 //input = smallest;
-var depth = 25;
+var depth = 75;
 
 
 var timer = System.Diagnostics.Stopwatch.StartNew();
 
-var result = 0ul;
+var result = 0l;
 
-var stones = input.Split(' ').Select(ulong.Parse).ToList();
+var stones = input.Split(' ').Select(long.Parse).ToList();
 
+var dct = new Dictionary<(string, int), long>();
 
-foreach (var stone in stones)
+for (int i = 0; i <= depth; i++)
 {
-    result += (ulong)DeepBlink(new[] { stone }, depth);
-    Console.WriteLine(stone);
-}
+    //Console.WriteLine($"depth {i}");
 
-
-int DeepBlink(ulong[] numbers, int depthLeft)
-{
-    if (depthLeft == 0)
+    result = 0;
+    foreach (var stone in stones)
     {
-        return numbers.Count();
+        result += (long)DeepBlink(new[] { stone }, i);
     }
-    return numbers.Sum(x => DeepBlink(Blink(x).ToArray(), depthLeft - 1));
+    //Console.WriteLine($" | Stones = {result}");
+
 }
 
-IEnumerable<ulong> Blink(ulong number)
+
+long DeepBlink(long[] numbers, int depthLeft)
+{
+    var key = (string.Join("|", numbers), depthLeft);
+    if (!dct.ContainsKey(key))
+    {
+        long cacheResult;
+        if (depthLeft == 0)
+        {
+            //Console.Write(" " + string.Join(" ", numbers));
+            cacheResult = numbers.Count();
+        }
+        else
+        {
+            cacheResult = numbers.Sum(x => DeepBlink(Blink(x).ToArray(), depthLeft - 1));
+        }
+        dct[key] = cacheResult;
+    }
+    return dct[key];
+}
+
+IEnumerable<long> Blink(long number)
 {
     if (number == 0)
     {
@@ -45,8 +64,8 @@ IEnumerable<ulong> Blink(ulong number)
     var digits = Math.Ceiling(Math.Log10(number + 1));
     if (digits % 2 == 0)
     {
-        yield return number / (ulong)Math.Pow(10, digits / 2);
-        yield return number % (ulong)Math.Pow(10, digits / 2);
+        yield return number / (long)Math.Pow(10, digits / 2);
+        yield return number % (long)Math.Pow(10, digits / 2);
     }
     else
     {
