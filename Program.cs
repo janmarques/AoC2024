@@ -1,4 +1,6 @@
-﻿var fullInput =
+﻿using System.Net.Http.Headers;
+
+var fullInput =
 @"FFFFVVVVCCCUUUUUUUUUUUUUUTUFFFFEEEEEEEXXBBBBBBBBBBBBBBEEEEEEEEEEEEECCCCCCCCCCCCCCCQQUUUZZZZZZZZZUZZZQUUUUUUIIIIIIIIDQQQQQQQQQNNNNNNNNNNNNNNN
 FFFVVVVVVVVUUUUUUUUUUUUUUUUFFFFEEEEEEEXXXBBBBBBBBEEEEEEEEEEEEEEEECCCCCCCCCCCCCCCCCQQUUZZZZZZZZZZZZZZUUUUUUUIIFFFOIDDDDQQQQQQNNNNNNNNNNNNNNNN
 FFFVVVVVVVVUUXUUUUUUUUUUUUUFXEEEEEEEEEXXXBBBBBBBBEEEEEEEEEEEEEEEECCCCCCCCCCCCCCCCQQQZZZZZZZZZZZZZZZZAUUUUUUOIFFFOIIDDDQQQQQQQQNNNNNNNNNNNNNN
@@ -161,7 +163,7 @@ OOOOO";
 
 var input = smallInput;
 input = fullInput;
-//input = smallest;
+input = smallest;
 var timer = System.Diagnostics.Stopwatch.StartNew();
 
 var result = 0l;
@@ -169,7 +171,7 @@ var result = 0l;
 var directions = new[] { new[] { 0, 1 }, new[] { 0, -1 }, new[] { 1, 0 }, new[] { -1, 0 } };
 
 var grid = input.Split(Environment.NewLine).Select(x => x.ToCharArray()).ToArray();
-var plotGrid = grid.Select(x => x.Select(y => new Plot { Letter = y }).ToArray()).ToArray();
+var plotGrid = grid.Select((x, j) => x.Select((y, i) => new Plot { Letter = y, X = i, Y = j }).ToArray()).ToArray();
 var height = grid.Length;
 var width = grid[0].Length;
 
@@ -190,7 +192,11 @@ for (int y = 0; y < height; y++)
     }
 }
 
+var fenceDirections = new Dictionary<char, int[]> { { 'N', new[] { 0, 1 } }, { 'S', new[] { 0, -1 } }, { 'E', new[] { 1, 0 } }, { 'W', new[] { -1, 0 } } };
+
+
 var allPlots = plotGrid.SelectMany(x => x);
+var regions = new Dictionary<Guid, List<Plot>>();
 while (true)
 {
     var somePlot = allPlots.FirstOrDefault(x => !x.RegionId.HasValue);
@@ -200,38 +206,27 @@ while (true)
     somePlot.GetSimilarNeighbours(visited);
 
     var regionId = Guid.NewGuid();
-    visited.ToList().ForEach(x => x.RegionId = regionId);
+    var list = visited.ToList();
+    list.ForEach(x => x.RegionId = regionId);
+    list.ForEach(x => x.InitializeFences(fenceDirections));
+    regions[regionId] = list;
 }
 
-var perimeters = allPlots.Select(x => x.RegionId).Distinct().ToDictionary(x => x, x => 0);
+//var perimeters = allPlots.Select(x => x.RegionId).Distinct().ToDictionary(x => x, x => 0);
+var sides = allPlots.Select(x => x.RegionId).Distinct().ToDictionary(x => x, x => 0);
 var areas = allPlots.GroupBy(x => x.RegionId).ToDictionary(x => x.Key, x => x.Count());
 
-for (int y = 0; y < height; y++)
+
+
+foreach (var item in regions)
 {
-    for (int x = 0; x < width; x++)
-    {
-        foreach (var direction in directions)
-        {
-            var value = plotGrid[x][y].RegionId;
-            var otherX = direction[0] + x;
-            var otherY = direction[1] + y;
-            if (otherX < 0 || otherY < 0 || otherX >= width || otherY >= height)
-            {
-                perimeters[value]++;
-                continue;
-            }
-            var otherValue = plotGrid[otherX][otherY].RegionId;
-            if (value != otherValue)
-            {
-                perimeters[value]++;
-            }
-        }
-    }
+    var fences = item.Value.Select(x => x.Fences.Select(y => (x.X, x.Y, y))).SelectMany(x => x).ToList();
+    var grouped = fences.GroupBy(x => x, IsContinous);
 }
 
 foreach (var regionId in allPlots.Select(x => x.RegionId).Distinct())
 {
-    result += perimeters[regionId] * areas[regionId];
+    result += sides[regionId] * areas[regionId];
 }
 
 
@@ -255,10 +250,13 @@ void PrintGrid<T>(T[][] grid)
 
 class Plot
 {
+    public int X { get; set; }
+    public int Y { get; set; }
     public char Letter { get; set; }
     public Guid? RegionId { get; set; }
 
     public List<Plot> Neighbours { get; set; } = new List<Plot>();
+    public List<char> Fences { get; set; } = new List<char>();
 
     public void GetSimilarNeighbours(HashSet<Plot> visited)
     {
@@ -266,14 +264,28 @@ class Plot
         {
             if (Letter == item.Letter && !visited.Contains(item))
             {
-                //yield return item;
                 visited.Add(item);
                 item.GetSimilarNeighbours(visited);
-                //foreach (var item2 in item.GetSimilarNeighbours(visited))
-                //{
-                //    //yield return item;
-                //}
             }
         }
+    }
+
+    public void InitializeFences(Dictionary<char, int[]> fenceDirections)
+    {
+        foreach (var fenceDirection in fenceDirections)
+        {
+            var shouldBeFenced = !Neighbours.Any(x => x.RegionId == RegionId && x.X == X + fenceDirection.Value[0] && x.Y == Y + fenceDirection.Value[1]);
+            if (shouldBeFenced)
+            {
+                Fences.Add(fenceDirection.Key);
+            }
+        }
+
+    }
+
+
+    public void TraversePerimeter(HashSet<Plot> visited, ref int sideCount, Plot previous)
+    {
+
     }
 }
