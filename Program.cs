@@ -199,8 +199,12 @@ for (int y = 0; y < height; y++)
     }
 }
 
-var fenceDirections = new Dictionary<char, int[]> { { 'N', new[] { 0, 1 } }, { 'S', new[] { 0, -1 } }, { 'E', new[] { 1, 0 } }, { 'W', new[] { -1, 0 } } };
-
+var orientations = new[] {
+        new Orientation('N', x => x.Y, x => x.X, 0, 1),
+        new Orientation('S', x => x.Y, x => x.X, 0, -1),
+        new Orientation('E', x => x.X, x => x.Y, 1, 0),
+        new Orientation('W', x => x.X, x => x.Y, -1, 0),
+    };
 
 var allPlots = plotGrid.SelectMany(x => x);
 var regions = new Dictionary<Guid, List<Plot>>();
@@ -215,7 +219,7 @@ while (true)
     var regionId = Guid.NewGuid();
     var list = visited.ToList();
     list.ForEach(x => x.RegionId = regionId);
-    list.ForEach(x => x.InitializeFences(fenceDirections));
+    list.ForEach(x => x.InitializeFences(orientations));
     regions[regionId] = list;
 }
 
@@ -229,54 +233,20 @@ foreach (var item in regions)
     //var sideList = new List<(int X, int Y, char direction)>();
     var sideCount = 0;
     var fences = item.Value.Select(x => x.Fences.Select(y => (x.X, x.Y, orientation: y))).SelectMany(x => x).ToList();
-    var norths = fences.Where(x => x.orientation == 'N').GroupBy(x => x.Y).Select(x => x.OrderBy(y => y.X).ToArray());
-    foreach (var line in norths)
-    {
-        sideCount++;
-        for (var i = 1; i < line.Length; i++)
-        {
-            if (line[i - 1].X + 1 != line[i].X)
-            {
-                sideCount++;
-            }
-        }
-    }
 
-    var souths = fences.Where(x => x.orientation == 'S').GroupBy(x => x.Y).Select(x => x.OrderBy(y => y.X).ToArray());
-    foreach (var line in souths)
-    {
-        sideCount++;
-        for (var i = 1; i < line.Length; i++)
-        {
-            if (line[i - 1].X + 1 != line[i].X)
-            {
-                sideCount++;
-            }
-        }
-    }
 
-    var easts = fences.Where(x => x.orientation == 'E').GroupBy(x => x.X).Select(x => x.OrderBy(y => y.Y).ToArray());
-    foreach (var line in easts)
+    foreach (var orientation in orientations)
     {
-        sideCount++;
-        for (var i = 1; i < line.Length; i++)
+        var relevants = fences.Where(x => x.orientation == orientation.letter).GroupBy(orientation.group).Select(x => x.OrderBy(orientation.order).ToArray());
+        foreach (var line in relevants)
         {
-            if (line[i - 1].Y + 1 != line[i].Y)
+            sideCount++;
+            for (var i = 1; i < line.Length; i++)
             {
-                sideCount++;
-            }
-        }
-    }
-
-    var wests = fences.Where(x => x.orientation == 'W').GroupBy(x => x.X).Select(x => x.OrderBy(y => y.Y).ToArray());
-    foreach (var line in wests)
-    {
-        sideCount++;
-        for (var i = 1; i < line.Length; i++)
-        {
-            if (line[i - 1].Y + 1 != line[i].Y)
-            {
-                sideCount++;
+                if (orientation.order(line[i - 1]) + 1 != orientation.order(line[i]))
+                {
+                    sideCount++;
+                }
             }
         }
     }
@@ -330,22 +300,18 @@ class Plot
         }
     }
 
-    public void InitializeFences(Dictionary<char, int[]> fenceDirections)
+    public void InitializeFences(Orientation[] fenceDirections)
     {
         foreach (var fenceDirection in fenceDirections)
         {
-            var shouldBeFenced = !Neighbours.Any(x => x.RegionId == RegionId && x.X == X + fenceDirection.Value[0] && x.Y == Y + fenceDirection.Value[1]);
+            var shouldBeFenced = !Neighbours.Any(x => x.RegionId == RegionId && x.X == X + fenceDirection.xOffset && x.Y == Y + fenceDirection.yOffset);
             if (shouldBeFenced)
             {
-                Fences.Add(fenceDirection.Key);
+                Fences.Add(fenceDirection.letter);
             }
         }
 
     }
-
-
-    public void TraversePerimeter(HashSet<Plot> visited, ref int sideCount, Plot previous)
-    {
-
-    }
 }
+
+record Orientation(char letter, Func<(int X, int Y, char direction), int> group, Func<(int X, int Y, char direction), int> order, int xOffset, int yOffset);
