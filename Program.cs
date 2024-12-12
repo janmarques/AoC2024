@@ -161,9 +161,16 @@ OOOOO
 OZOYO
 OOOOO";
 
+smallest =
+@"EEEEE
+EXXXX
+EEEEE
+EXXXX
+EEEEE";
+
 var input = smallInput;
 input = fullInput;
-input = smallest;
+//input = smallest;
 var timer = System.Diagnostics.Stopwatch.StartNew();
 
 var result = 0l;
@@ -217,11 +224,64 @@ var sides = allPlots.Select(x => x.RegionId).Distinct().ToDictionary(x => x, x =
 var areas = allPlots.GroupBy(x => x.RegionId).ToDictionary(x => x.Key, x => x.Count());
 
 
-
 foreach (var item in regions)
 {
-    var fences = item.Value.Select(x => x.Fences.Select(y => (x.X, x.Y, y))).SelectMany(x => x).ToList();
-    var grouped = fences.GroupBy(x => x, IsContinous);
+    //var sideList = new List<(int X, int Y, char direction)>();
+    var sideCount = 0;
+    var fences = item.Value.Select(x => x.Fences.Select(y => (x.X, x.Y, orientation: y))).SelectMany(x => x).ToList();
+    var norths = fences.Where(x => x.orientation == 'N').GroupBy(x => x.Y).Select(x => x.OrderBy(y => y.X).ToArray());
+    foreach (var line in norths)
+    {
+        sideCount++;
+        for (var i = 1; i < line.Length; i++)
+        {
+            if (line[i - 1].X + 1 != line[i].X)
+            {
+                sideCount++;
+            }
+        }
+    }
+
+    var souths = fences.Where(x => x.orientation == 'S').GroupBy(x => x.Y).Select(x => x.OrderBy(y => y.X).ToArray());
+    foreach (var line in souths)
+    {
+        sideCount++;
+        for (var i = 1; i < line.Length; i++)
+        {
+            if (line[i - 1].X + 1 != line[i].X)
+            {
+                sideCount++;
+            }
+        }
+    }
+
+    var easts = fences.Where(x => x.orientation == 'E').GroupBy(x => x.X).Select(x => x.OrderBy(y => y.Y).ToArray());
+    foreach (var line in easts)
+    {
+        sideCount++;
+        for (var i = 1; i < line.Length; i++)
+        {
+            if (line[i - 1].Y + 1 != line[i].Y)
+            {
+                sideCount++;
+            }
+        }
+    }
+
+    var wests = fences.Where(x => x.orientation == 'W').GroupBy(x => x.X).Select(x => x.OrderBy(y => y.Y).ToArray());
+    foreach (var line in wests)
+    {
+        sideCount++;
+        for (var i = 1; i < line.Length; i++)
+        {
+            if (line[i - 1].Y + 1 != line[i].Y)
+            {
+                sideCount++;
+            }
+        }
+    }
+
+    sides[item.Key] = sideCount;
 }
 
 foreach (var regionId in allPlots.Select(x => x.RegionId).Distinct())
