@@ -1299,10 +1299,10 @@ Prize: X=18641, Y=10279";
 var smallest = "";
 
 var input = smallInput;
-//var input = fullInput;
-//var input = smallest;
+input = fullInput;
+//input = smallest;
 
-var result = "";
+var result = 0l;
 
 var machineDescriptions = input
     .Replace(Environment.NewLine + Environment.NewLine, Environment.NewLine + "XXX" + Environment.NewLine)
@@ -1318,15 +1318,26 @@ var machineDescriptions = input
         .Select(int.Parse)
         )
     .Select(x => (aX: x.ElementAt(0), aY: x.ElementAt(1), bX: x.ElementAt(2), bY: x.ElementAt(3), pX: x.ElementAt(4), pY: x.ElementAt(5))
-    )
-    .ToList();
+    ).ToList();
 
+
+var aCost = 3;
+var bCost = 1;
 foreach (var machineDescription in machineDescriptions)
 {
-    var aPush = 80;
-    var bPush = 40;
-    var x = aPush * machineDescription.aX + bPush * machineDescription.bX;
-    var y = aPush * machineDescription.aY + bPush * machineDescription.bY;
+    for (var aPush = 0; aPush < 100; aPush++)
+    {
+        for (var bPush = 0; bPush < 100; bPush++)
+        {
+            var x = aPush * machineDescription.aX + bPush * machineDescription.bX;
+            var y = aPush * machineDescription.aY + bPush * machineDescription.bY;
+            if (x == machineDescription.pX && y == machineDescription.pY)
+            {
+                result += aCost * aPush;
+                result += bCost * bPush;
+            }
+        }
+    }
 }
 
 Console.WriteLine(result);
