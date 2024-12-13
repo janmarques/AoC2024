@@ -1307,7 +1307,7 @@ input = fullInput;
 var result = new BigInteger(0);
 
 var offset = 10000000000000;
-offset = 0;
+//offset = 0;
 
 var machineDescriptions = input
     .Replace(Environment.NewLine + Environment.NewLine, Environment.NewLine + "XXX" + Environment.NewLine)
