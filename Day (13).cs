@@ -1,4 +1,6 @@
-﻿var fullInput =
+﻿using System.Numerics;
+
+var fullInput =
 @"Button A: X+31, Y+85
 Button B: X+30, Y+24
 Prize: X=3096, Y=8256
@@ -1299,10 +1301,13 @@ Prize: X=18641, Y=10279";
 var smallest = "";
 
 var input = smallInput;
-input = fullInput;
+//input = fullInput;
 //input = smallest;
 
 var result = 0l;
+
+var offset = 10000000000000;
+//offset = 0;
 
 var machineDescriptions = input
     .Replace(Environment.NewLine + Environment.NewLine, Environment.NewLine + "XXX" + Environment.NewLine)
@@ -1315,9 +1320,9 @@ var machineDescriptions = input
         .Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries)
         .Select(x => x.Split(": ")[1].Split(", "))
         .SelectMany(x => x)
-        .Select(int.Parse)
+        .Select(long.Parse)
         )
-    .Select(x => (aX: x.ElementAt(0), aY: x.ElementAt(1), bX: x.ElementAt(2), bY: x.ElementAt(3), pX: x.ElementAt(4), pY: x.ElementAt(5))
+    .Select(x => (aX: x.ElementAt(0), aY: x.ElementAt(1), bX: x.ElementAt(2), bY: x.ElementAt(3), pX: new BigInteger(offset + x.ElementAt(4)), pY: new BigInteger( offset + x.ElementAt(5)))
     ).ToList();
 
 
@@ -1325,9 +1330,11 @@ var aCost = 3;
 var bCost = 1;
 foreach (var machineDescription in machineDescriptions)
 {
-    for (var aPush = 0; aPush < 100; aPush++)
+    Console.WriteLine($"X^2*{machineDescription.aX * machineDescription.aY} + X*Y*{machineDescription.aX*machineDescription.bY} + X*Y*{machineDescription.bX * machineDescription.aY} + Y^2*{machineDescription.bX * machineDescription.bY} - {machineDescription.pX * machineDescription.pY} = 0");
+    continue;
+    for (var aPush = 0; aPush < 10000; aPush++)
     {
-        for (var bPush = 0; bPush < 100; bPush++)
+        for (var bPush = 0; bPush < 10000; bPush++)
         {
             var x = aPush * machineDescription.aX + bPush * machineDescription.bX;
             var y = aPush * machineDescription.aY + bPush * machineDescription.bY;
@@ -1335,7 +1342,12 @@ foreach (var machineDescription in machineDescriptions)
             {
                 result += aCost * aPush;
                 result += bCost * bPush;
+
+
+                var asdas = (x * y);
+                var asdas22 = (machineDescription.pX * machineDescription.pY);
             }
+
         }
     }
 }
