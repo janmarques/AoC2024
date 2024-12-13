@@ -1301,13 +1301,13 @@ Prize: X=18641, Y=10279";
 var smallest = "";
 
 var input = smallInput;
-//input = fullInput;
+input = fullInput;
 //input = smallest;
 
-var result = 0l;
+var result = new BigInteger(0);
 
 var offset = 10000000000000;
-//offset = 0;
+offset = 0;
 
 var machineDescriptions = input
     .Replace(Environment.NewLine + Environment.NewLine, Environment.NewLine + "XXX" + Environment.NewLine)
@@ -1322,34 +1322,25 @@ var machineDescriptions = input
         .SelectMany(x => x)
         .Select(long.Parse)
         )
-    .Select(x => (aX: x.ElementAt(0), aY: x.ElementAt(1), bX: x.ElementAt(2), bY: x.ElementAt(3), pX: new BigInteger(offset + x.ElementAt(4)), pY: new BigInteger( offset + x.ElementAt(5)))
+    .Select(x => (aX: x.ElementAt(0), aY: x.ElementAt(1), bX: x.ElementAt(2), bY: x.ElementAt(3), pX: new BigInteger(offset + x.ElementAt(4)), pY: new BigInteger(offset + x.ElementAt(5)))
     ).ToList();
 
 
 var aCost = 3;
 var bCost = 1;
-foreach (var machineDescription in machineDescriptions)
+foreach (var md in machineDescriptions)
 {
-    Console.WriteLine($"X^2*{machineDescription.aX * machineDescription.aY} + X*Y*{machineDescription.aX*machineDescription.bY} + X*Y*{machineDescription.bX * machineDescription.aY} + Y^2*{machineDescription.bX * machineDescription.bY} - {machineDescription.pX * machineDescription.pY} = 0");
+    //Console.WriteLine($"X^2*{md.aX * md.aY} + X*Y*{md.aX * md.bY} + X*Y*{md.bX * md.aY} + Y^2*{md.bX * md.bY} - {md.pX * md.pY} = 0");
+
+    var bPush = (md.aY * md.pX - md.aX * md.pY) / (-1 * md.aX * md.bY + md.aY * md.bX);
+    var aPush = (md.pY - md.bY * bPush) / md.aY;
+
+    var actual = (aPush * md.aX + bPush * md.bX) * (aPush * md.aY + bPush * md.bY);
+    var expected = (md.pX * md.pY);
+    if (actual != expected) { continue; }
+    result += aPush * aCost;
+    result += bPush * bCost;
     continue;
-    for (var aPush = 0; aPush < 10000; aPush++)
-    {
-        for (var bPush = 0; bPush < 10000; bPush++)
-        {
-            var x = aPush * machineDescription.aX + bPush * machineDescription.bX;
-            var y = aPush * machineDescription.aY + bPush * machineDescription.bY;
-            if (x == machineDescription.pX && y == machineDescription.pY)
-            {
-                result += aCost * aPush;
-                result += bCost * bPush;
-
-
-                var asdas = (x * y);
-                var asdas22 = (machineDescription.pX * machineDescription.pY);
-            }
-
-        }
-    }
 }
 
 Console.WriteLine(result);
