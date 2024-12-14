@@ -1,4 +1,5 @@
 ﻿//using System.Numerics;
+//using System.Runtime.Intrinsics.Arm;
 
 //var fullInput =
 //@"Button A: X+31, Y+85
@@ -1301,10 +1302,11 @@
 //var smallest = "";
 
 //var input = smallInput;
-////input = fullInput;
+//input = fullInput;
 ////input = smallest;
+//var timer = System.Diagnostics.Stopwatch.StartNew();
 
-//var result = 0l;
+//var result = new BigInteger(0);
 
 //var offset = 10000000000000;
 ////offset = 0;
@@ -1322,35 +1324,32 @@
 //        .SelectMany(x => x)
 //        .Select(long.Parse)
 //        )
-//    .Select(x => (aX: x.ElementAt(0), aY: x.ElementAt(1), bX: x.ElementAt(2), bY: x.ElementAt(3), pX: new BigInteger(offset + x.ElementAt(4)), pY: new BigInteger( offset + x.ElementAt(5)))
+//    .Select(x => (aX: x.ElementAt(0), aY: x.ElementAt(1), bX: x.ElementAt(2), bY: x.ElementAt(3), pX: new BigInteger(offset + x.ElementAt(4)), pY: new BigInteger(offset + x.ElementAt(5)))
 //    ).ToList();
 
 
 //var aCost = 3;
 //var bCost = 1;
-//foreach (var machineDescription in machineDescriptions)
+//foreach (var (aX, aY, bX, bY, pX, pY) in machineDescriptions)
 //{
-//    Console.WriteLine($"X^2*{machineDescription.aX * machineDescription.aY} + X*Y*{machineDescription.aX*machineDescription.bY} + X*Y*{machineDescription.bX * machineDescription.aY} + Y^2*{machineDescription.bX * machineDescription.bY} - {machineDescription.pX * machineDescription.pY} = 0");
+//// XPrice = APressed * AX + BPressed * BX
+////    YPrice = APressed * AY + BPressed * BY->APressed = (YPrice - BPressed * BY) / AY
+////XPrice = ((YPrice - BPressed * BY) / AY) * AX + BPressed * BX
+////-> ... solve to BPressed
+
+
+//    var bPressed = (aY * pX - aX * pY) / (-1 * aX * bY + aY * bX);
+//    var aPressed = (pY - bY * bPressed) / aY;
+
+//    var actual = (aPressed * aX + bPressed * bX) * (aPressed * aY + bPressed * bY);
+//    var expected = (pX * pY);
+//    if (actual != expected) { continue; }
+//    result += aPressed * aCost;
+//    result += bPressed * bCost;
 //    continue;
-//    for (var aPush = 0; aPush < 10000; aPush++)
-//    {
-//        for (var bPush = 0; bPush < 10000; bPush++)
-//        {
-//            var x = aPush * machineDescription.aX + bPush * machineDescription.bX;
-//            var y = aPush * machineDescription.aY + bPush * machineDescription.bY;
-//            if (x == machineDescription.pX && y == machineDescription.pY)
-//            {
-//                result += aCost * aPush;
-//                result += bCost * bPush;
-
-
-//                var asdas = (x * y);
-//                var asdas22 = (machineDescription.pX * machineDescription.pY);
-//            }
-
-//        }
-//    }
 //}
 
+//timer.Stop();
 //Console.WriteLine(result);
+//Console.WriteLine(timer.ElapsedMilliseconds + "ms");
 //Console.ReadLine();
