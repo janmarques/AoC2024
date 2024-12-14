@@ -1,4 +1,5 @@
 ﻿using System.Net.Http.Headers;
+using System.Text;
 
 var fullInput =
 @"p=82,54 v=14,-84
@@ -521,65 +522,77 @@ var smallest = "p=2,4 v=2,-3";
 var input = smallInput;
 input = fullInput;
 //input = smallest;
+var timer = System.Diagnostics.Stopwatch.StartNew();
 
 var result = 0l;
 
 var robots = input.Replace("p=", "").Replace("v=", "").Replace(" ", ",").Split(Environment.NewLine).Select(x => x.Split(",").Select(int.Parse).ToArray()).Select(x => new Robot { X = x[0], Y = x[1], vX = x[2], vY = x[3] }).ToList();
-var xMax = robots.Max(x => x.X)+1;
-var yMax = robots.Max(x => x.Y)+1;
+var xMax = robots.Max(x => x.X) + 1;
+var yMax = robots.Max(x => x.Y) + 1;
 //xMax = 10+1;
 //yMax = 7+1;
 
-PrintGrid();
+//PrintGrid();
+
+var sb = new StringBuilder();
 
 
-for (int i = 0; i < 100; i++)
+while (true)
 {
+    result++;
+    //Console.WriteLine(i);
     foreach (var robot in robots)
     {
         robot.X = (robot.X + robot.vX + xMax) % xMax;
         robot.Y = (robot.Y + robot.vY + yMax) % yMax;
     }
-    Console.Clear();
-    Console.WriteLine($"i={i}");
+    var cache = robots.Select(x => HashCode.Combine(x.X, x.Y)).ToHashSet();
+    var sus = robots.Any(x => IsChristmassy(x, cache));
+    if (sus)
+    {
+
+        WriteGrid(sb, cache);
+        Console.WriteLine(sb.ToString());
+        sb.Clear();
+        break;
+    }
+
     //PrintGrid();
-}
-
-var quadrants = new[] {
-    (from:(0,0), to: (xMax/2-1, yMax/2-1)),
-    (from:(xMax/2 +1,0), to: (xMax, yMax/2-1)),
-
-    (from:(0,yMax/2 +1), to: (xMax/2-1, yMax)),
-
-    (from:(xMax/2 +1,yMax/2 +1), to: (xMax, yMax)),
-    };
-
-result = 1;
-var totalCount = 0;
-foreach (var quadrant in quadrants)
-{
-    var count = robots.Where(x => x.X >= quadrant.from.Item1 && x.Y >= quadrant.from.Item2 && x.X <= quadrant.to.Item1 && x.Y <= quadrant.to.Item2).Count();
-    totalCount += count;
-    result *= count;
+    //Console.ReadLine();
 }
 
 
 
+timer.Stop();
 Console.WriteLine(result);
+Console.WriteLine(timer.ElapsedMilliseconds + "ms");
 Console.ReadLine();
 
-void PrintGrid()
+bool IsChristmassy(Robot r, HashSet<int> cache)
+{
+    for (var i = 0; i < 4; i++)
+    {
+        if (!cache.Contains(HashCode.Combine(r.X - i, r.Y + i))) { return false; }
+
+        if (!cache.Contains(HashCode.Combine(r.X + i, r.Y + i))) { return false; }
+    }
+    return true;
+}
+
+
+void WriteGrid(StringBuilder sb, HashSet<int> cache)
 {
     for (int y = 0; y < yMax; y++)
     {
         for (int x = 0; x < xMax; x++)
         {
-            var count = robots.Count(r => r.X == x && r.Y == y);
-            Console.Write(count == 0 ? "." : count.ToString());
+            var count = cache.Contains(HashCode.Combine(x, y));
+            sb.Append(count ? "X" : " ");
         }
-        Console.WriteLine();
+        sb.AppendLine();
     }
 }
+
 
 class Robot
 {
