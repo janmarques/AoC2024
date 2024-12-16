@@ -97,35 +97,49 @@ vvv<<^>^v^^><<>>><>^<<><^vv^^<>vvv<>><^^v>^>vv<>v<<<<v<^v>^<^^>>>^<v<v
 v^^>>><<^^<>>^v^<v^vv<>v^<<>^<^v^v><^<<<><<^<v><v<>vv>>v><v^<vv<>v^<<^";
 
 var smallest =
-@"#######
-#...#.#
-#.....#
-#..OO@#
-#..O..#
-#.....#
-#######
+@"####################
+##[].......[].[][]##
+##[]...........[].##
+##[]........[][][]##
+##[]......[]....[]##
+##..##......[]....##
+##..[]............##
+##..@......[].[][]##
+##......[][]..[]..##
+####################
 
-<vv<<^^<<^^";
+>";
 
-smallest =
-@"########
-#....OO#
-##.....#
-#.....O#
-#.#O@..#
-#...O..#
-#...O..#
-########
+//smallest =
+//@"########
+//#....OO#
+//##.....#
+//#.....O#
+//#.#O@..#
+//#...O..#
+//#...O..#
+//########
 
-<";
+//<";
+
+//smallest =
+//@"##############
+//##......##..##
+//##..........##
+//##...[][]...##
+//##....[]....##
+//##....@.....##
+//##############
+
+//^";
 
 var input = smallInput;
 input = fullInput;
-input = smallest;
+//input = smallest;
 
-//input = input.Replace("#", "##").Replace("O", "[]").Replace(".", "..").Replace("@", "@.");
+input = input.Replace("#", "##").Replace("O", "[]").Replace(".", "..").Replace("@", "@.");
 bool print = true;
-//print = false;  
+print = false;
 var timer = System.Diagnostics.Stopwatch.StartNew();
 
 var result = 0l;
@@ -140,10 +154,21 @@ var height = gridInput.Count();
 var width = gridInput[0].Count();
 for (int y = 0; y < height; y++)
 {
+    var lastHalf = new Node();
     for (int x = 0; x < width; x++)
     {
-        grid.Add(new Node { Icon = gridInput[y][x], X = x, Y = y });
-        //grid.Add((x, y), new Node { Icon = gridInput[y][x], X = x, Y = y });
+        var node = new Node { Icon = gridInput[y][x], X = x, Y = y };
+        if (node.Icon == '[')
+        {
+            lastHalf = node;
+        }
+        if (node.Icon == ']')
+        {
+            node.BoxOtherHalf = lastHalf;
+            lastHalf.BoxOtherHalf = node;
+            lastHalf = null;
+        }
+        grid.Add(node);
     }
 }
 
@@ -159,45 +184,82 @@ var directions = new[] {
 
 if (print) { PrintGrid(); }
 var robot = grid.Single(x => x.Icon == '@');
+int i = 0;
 foreach (var movement in movements)
 {
+    Console.WriteLine($"{i} / {movements.Count()}");
+    i++;
     var direction = directions.Single(x => x.icon == movement);
-    var untilWall = TakeUntilWall(robot, direction.x, direction.y).Where(x => x != robot).ToList();
-    if (!untilWall.Any(x => x.Icon == '.'))
+    var untilWall = TakeUntilWall(new List<Node>(), robot, direction.x, direction.y).ToList();
+    if (!untilWall.All(x => x.Any(y => y.Icon == '.')))
     {
         continue;
     }
-    var boxesInBetween = untilWall.TakeWhile(x => x.Icon != '.');
-    var firstDot = untilWall.First(x => x.Icon == '.');
-    if (boxesInBetween.Any())
+    var cells = untilWall.SelectMany(x => x.TakeWhile(y => y.Icon != '.')).Distinct().ToList();
+
+    var newEmpties = new List<Node>();
+    var removes = new List<Node>();
+    foreach (var node in cells)
     {
-        (_, firstDot) = Swap(boxesInBetween.First(), firstDot);
+        newEmpties.Add(new Node { X = node.X, Y = node.Y, Icon = '.' });
+
+        var newX = node.X + direction.x;
+        var newY = node.Y + direction.y;
+        removes.Add(grid.SingleOrDefault(x => x.X == newX && x.Y == newY));
+        node.X = newX;
+        node.Y = newY;
+        //if (print) { PrintGrid(); }
+    }
+    foreach (var item in removes.Except(cells))
+    {
+        grid.Remove(item);
+    }
+    foreach (var item in newEmpties.Where(x => !grid.Any(y => x.X == y.X && x.Y == y.Y)).ToList())
+    {
+        grid.Add(item);
     }
 
-    (firstDot, robot) = Swap(firstDot, robot);
     if (print) { PrintGrid(); }
 
 }
+
 if (print) { PrintGrid(); }
 
 
-result = grid.Where(x => x.Icon == 'O').Sum(x => 100 * x.Y + x.X);
+result = grid.Where(x => x.Icon == '[').Sum(x => 100 * x.Y + x.X);
 
-(Node a, Node b) Swap(Node a, Node b)
+IEnumerable<List<Node>> TakeUntilWall(List<Node> path, Node node, int x, int y)
 {
-    (a.Icon, b.Icon) = (b.Icon, a.Icon);
-    return (b, a);
-}
-
-IEnumerable<Node> TakeUntilWall(Node node, int x, int y)
-{
-    if (node.Icon == '#') { yield break; }
     if (node == null) { yield break; }
-    yield return node;
-    var next = grid.SingleOrDefault(n => n.X == node.X + x && n.Y == node.Y + y);
-    foreach (var item in TakeUntilWall(next, x, y))
+    if (node.Icon == '#')
     {
-        yield return item;
+        yield return path;
+        yield break;
+    }
+    path.Add(node);
+    if (x == 0)
+    {
+        var next = grid.SingleOrDefault(n => n.X == node.X + x && n.Y == node.Y + y);
+        if ((next.Icon == ']' || next.Icon == '[') && next.BoxOtherHalf == null)
+        {
+
+        }
+        foreach (var item in TakeUntilWall(path.ToList(), next, x, y).ToList())
+        {
+            yield return item;
+        }
+        foreach (var item in TakeUntilWall(path.ToList(), next.BoxOtherHalf, x, y).ToList())
+        {
+            yield return item;
+        }
+    }
+    else if (y == 0)
+    {
+        var next = grid.SingleOrDefault(n => n.X == node.X + x && n.Y == node.Y + y);
+        foreach (var item in TakeUntilWall(path, next, x, y).ToList())
+        {
+            yield return item;
+        }
     }
 }
 
@@ -218,7 +280,7 @@ void WriteGrid(StringBuilder sb, IEnumerable<Node> cache)
     {
         for (int x = 0; x < width; x++)
         {
-            sb.Append(cache.Single(n => n.X == x && n.Y == y).Icon);
+            sb.Append(cache.SingleOrDefault(n => n.X == x && n.Y == y)?.Icon ?? '?');
         }
         sb.AppendLine();
     }
@@ -229,4 +291,7 @@ class Node
     public int X { get; set; }
     public int Y { get; set; }
     public char Icon { get; set; }
+    public Node BoxOtherHalf { get; set; }
+
+    public override string ToString() => $"{Icon} {X},{Y}";
 }
