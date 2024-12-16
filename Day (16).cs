@@ -234,11 +234,19 @@ char InverseDirection(char x)
         _ => throw new NotImplementedException()
     };
 
+int i = 0;
 
 var deadends = new HashSet<(short x, short y)>();
 while (pq.Count > 0)
 {
     var (maze, position, facing, score, pathTaken) = pq.Dequeue();
+    if (i % 100 == 0)
+    {
+        Console.WriteLine($"{i}i {pq.Count}queue {score}score {deadends.Count}dead");
+    }
+    i++;
+
+    maze = maze.Except(deadends).ToList();
     if (score > result)
     {
         break;
@@ -273,7 +281,7 @@ while (pq.Count > 0)
 
 timer.Stop();
 Console.WriteLine(result);
-PrintGrid();
+//PrintGrid();
 Console.WriteLine(timer.ElapsedMilliseconds + "ms");
 Console.ReadLine();
 
