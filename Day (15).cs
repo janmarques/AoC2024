@@ -97,35 +97,35 @@ vvv<<^>^v^^><<>>><>^<<><^vv^^<>vvv<>><^^v>^>vv<>v<<<<v<^v>^<^^>>>^<v<v
 v^^>>><<^^<>>^v^<v^vv<>v^<<>^<^v^v><^<<<><<^<v><v<>vv>>v><v^<vv<>v^<<^";
 
 var smallest =
+@"#######
+#...#.#
+#.....#
+#..OO@#
+#..O..#
+#.....#
+#######
+
+<vv<<^^<<^^";
+
+smallest =
 @"########
-#..O.O.#
-##@.O..#
+#....OO#
+##.....#
+#.....O#
+#.#O@..#
 #...O..#
-#.#.O..#
 #...O..#
-#......#
 ########
 
-<^^>>>vv<v>>v<<";
-
-//smallest =
-//@"########
-//#....OO#
-//##.....#
-//#.....O#
-//#.#O@..#
-//#...O..#
-//#...O..#
-//########
-
-//<";
+<";
 
 var input = smallInput;
 input = fullInput;
-//input = smallest;
+input = smallest;
 
+//input = input.Replace("#", "##").Replace("O", "[]").Replace(".", "..").Replace("@", "@.");
 bool print = true;
-print = false;  
+//print = false;  
 var timer = System.Diagnostics.Stopwatch.StartNew();
 
 var result = 0l;
@@ -167,7 +167,7 @@ foreach (var movement in movements)
     {
         continue;
     }
-    var boxesInBetween = untilWall.TakeWhile(x => x.Icon == 'O');
+    var boxesInBetween = untilWall.TakeWhile(x => x.Icon != '.');
     var firstDot = untilWall.First(x => x.Icon == '.');
     if (boxesInBetween.Any())
     {
