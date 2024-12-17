@@ -181,7 +181,7 @@ var smallest =
 
 var input = smallInput;
 input = fullInput;
-//input = smallest;
+input = smallest;
 var timer = System.Diagnostics.Stopwatch.StartNew();
 
 var result = long.MaxValue;
@@ -260,8 +260,34 @@ while (true)
     distances[currentNode] = (true, distance);
 }
 
+var visitedSet = new HashSet<(short, short)>();
+var toVisit = new HashSet<(short x, short y)>() { (target.Item1, target.Item2) };
+while (true)
+{
+    if (!toVisit.Any()) { break; }
+    var newToVisit = new HashSet<(short, short)>() { };
+    foreach (var item in toVisit)
+    {
+        visitedSet.Add(item);
+        var closestNeigbours = directions
+            .Select(dir => distances.Where(dis => dis.Key.x == item.x + dir.x && dis.Key.y == item.y + dir.y).OrderBy(x => x.Value.distance).FirstOrDefault())
+            .Where(x => x.Key != default)
+            .Select(x => (item: (x.Key.x, x.Key.y), x.Value.distance))
+            .Where(x => !visitedSet.Contains(x.item))
+            .GroupBy(x => x.distance)
+            .OrderBy(x => x.Key)
+            .FirstOrDefault();
+        if (closestNeigbours == null) { break; }
+        foreach (var sub in closestNeigbours.Select(x => (x.item.x, x.item.y)))
+        {
+            newToVisit.Add(sub);
+        }
+    }
+    toVisit = newToVisit;
+}
 
 timer.Stop();
+
 
 var qqq = distances.Where(x => x.Key.x == target.Item1 && x.Key.y == target.Item2).ToList();
 result = qqq.Min(x => x.Value.distance);
