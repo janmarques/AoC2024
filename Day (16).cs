@@ -1,4 +1,5 @@
 ﻿using System.Text;
+using System.Xml.Linq;
 
 var fullInput =
 @"#############################################################################################################################################
@@ -234,6 +235,22 @@ char InverseDirection(char x)
         _ => throw new NotImplementedException()
     };
 
+AStar(start, target);
+
+List<(short x, short y)> ReconstructPath(Dictionary<(short x, short y), (short x, short y)> parentMap, (short x, short y) current)
+{
+    var path = new List<(short x, short y)> { current };
+
+    while (parentMap.ContainsKey(current))
+    {
+        current = parentMap[current];
+        path.Add(current);
+    }
+
+    path.Reverse();
+    return path;
+}
+
 int i = 0;
 
 var deadends = new HashSet<(short x, short y)>();
@@ -278,6 +295,60 @@ while (pq.Count > 0)
 }
 
 
+List<(short x, short y)> AStar((short x, short y) start, (short x, short y) goal)
+{
+    var openList = new List<(short x, short y)> { start };
+    var closedList = new HashSet<(short x, short y)>();
+
+    // Dictionaries to hold g(n), h(n), and parent pointers
+    var gScore = new Dictionary<(short x, short y), double> { [start] = 0 };
+    var hScore = new Dictionary<(short x, short y), double> { [start] = Heuristic(start, goal) };
+    var parentMap = new Dictionary<(short x, short y), (short x, short y)>();
+
+    while (openList.Count > 0)
+    {
+        // Find (short x, short y) in open list with the lowest F score
+        var current = openList.OrderBy(node => gScore[node] + hScore[node]).First();
+
+        if (current == goal)
+        {
+            return ReconstructPath(parentMap, current);
+        }
+
+        openList.Remove(current);
+        closedList.Add(current);
+
+        foreach (var neighbor in directions.Select(x => ((short)x.x, (short)x.y)))
+        {
+            if (neighbor == default || closedList.Contains(neighbor)) continue;
+
+            // Tentative gScore (current gScore + distance to neighbor)
+            double tentativeGScore = gScore[current] + 1/* current.Neighbors[neighborId]*/;
+
+            if (!gScore.ContainsKey(neighbor) || tentativeGScore < gScore[neighbor])
+            {
+                // Update gScore and hScore
+                gScore[neighbor] = tentativeGScore;
+                hScore[neighbor] = Heuristic(neighbor, goal);
+
+                // Set the current (short x, short y) as the parent of the neighbor
+                parentMap[neighbor] = current;
+
+                if (!openList.Contains(neighbor))
+                {
+                    openList.Add(neighbor);
+                }
+            }
+        }
+    }
+
+    return null; // No path found
+}
+
+double Heuristic(object neighbor, (short x, short y) goal)
+{
+    return 0;
+}
 
 timer.Stop();
 Console.WriteLine(result);
