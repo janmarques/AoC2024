@@ -32,57 +32,54 @@ Program: 0,3,5,4,3,0 ";
 var input = smallInput;
 input = fullInput;
 //input = smallest;
-var timer = System.Diagnostics.Stopwatch.StartNew();
 
+var timer = System.Diagnostics.Stopwatch.StartNew();
 var result = 0l;
 
-var inputs = input.Replace(Environment.NewLine, "").Replace("Register A: ", "").Replace("Register B: ", ",").Replace("Register C: ", ",").Replace("Program: ", ",").Replace(" ", "").Split(',').Select(int.Parse).ToList();
+var program = input.Split(Environment.NewLine).Last().Split(":").Last().Split(",", StringSplitOptions.TrimEntries).Select(long.Parse).ToArray();
 
 // Heavily based on https://github.com/dmitry-shechtman/aoc2024/blob/main/day17/Program.cs
-
-result = Play(202975183645226, 0, 0);
-
-
-long Play(long regA, long regB, long regC)
+for (int depth = 1; depth <= program.Length; depth++)
 {
-    var registersInit = Enumerable.Range(0, 3).ToDictionary(x => (char)(x + 65), x => (long)inputs[x]);
-    var program = inputs.Skip(3).ToList();
-
-    var registers = registersInit.ToDictionary(x => x.Key, x => x.Value);
-    registers['A'] = regA;
-    registers['B'] = regB;
-    registers['C'] = regC;
-
-    var output = new List<long>();
-    for (int pointer = 0; pointer < program.Count; pointer = pointer + 2)
+    result *= 8;
+    var needle = program.TakeLast(depth);
+    while (!needle.SequenceEqual(Play(result)))
     {
-        long GetValue(int n)
+        result++;
+    }
+}
+
+IEnumerable<long> Play(long a)
+{
+    var b = 0L;
+    var c = 0L;
+
+    for (long i = 0; i < program.Length; i = i + 2)
+    {
+        long GetValue(long n)
         {
             if (n < 4) { return n; }
-            if (n == 7) { return 9999; }
-            return registers[(char)(n + 61)];
+            if (n == 4) { return a; }
+            if (n == 5) { return b; }
+            if (n == 6) { return c; }
+            return long.MaxValue;
         }
-        var opcode = program[pointer];
-        var literalOperant = program[pointer + 1];
+        var opcode = program[i];
+        var literalOperant = program[i + 1];
         var comboOperant = GetValue(literalOperant);
 
         switch (opcode)
         {
-            case 0: registers['A'] /= (int)Math.Pow(2, comboOperant); break;
-            case 1: registers['B'] ^= literalOperant; break;
-            case 2: registers['B'] = comboOperant % 8; break;
-            case 3: if (registers['A'] != 0) { pointer = literalOperant - 2; }; break;
-            case 4: registers['B'] ^= registers['C']; break;
-            case 5: output.Add(comboOperant % 8); break;
-            case 6: registers['B'] = registers['A'] / (int)Math.Pow(2, comboOperant); break;
-            case 7: registers['C'] = registers['A'] / (int)Math.Pow(2, comboOperant); break;
-
-            default:
-                break;
+            case 0: a /= (int)Math.Pow(2, comboOperant); break;
+            case 1: b ^= literalOperant; break;
+            case 2: b = comboOperant % 8; break;
+            case 3: if (a != 0) { i = literalOperant - 2; }; break;
+            case 4: b ^= c; break;
+            case 5: yield return comboOperant % 8; break;
+            case 6: b = a / (int)Math.Pow(2, comboOperant); break;
+            case 7: c = a / (int)Math.Pow(2, comboOperant); break;
         }
-
     }
-    return long.Parse(string.Join("", output));
 }
 
 
