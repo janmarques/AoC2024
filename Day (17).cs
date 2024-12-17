@@ -1,9 +1,12 @@
-﻿var fullInput =
+﻿using System.Globalization;
+using System.Text;
+
+var fullInput =
 @"Register A: 30886132
 Register B: 0
 Register C: 0
 
-Program: 2,4,1,1,7,5,0,3,1,4,4,4,5,5,3,0";
+Program: 2, 4,1,1, 7,5,0, 3,1,4, 4,4,5, 5,3,0";
 
 var smallInput =
 @"Register A: 729
@@ -31,28 +34,29 @@ input = fullInput;
 //input = smallest;
 var timer = System.Diagnostics.Stopwatch.StartNew();
 
-var result = 0;
+var result = 0l;
 
 var inputs = input.Replace(Environment.NewLine, "").Replace("Register A: ", "").Replace("Register B: ", ",").Replace("Register C: ", ",").Replace("Program: ", ",").Replace(" ", "").Split(',').Select(int.Parse).ToList();
 
 
-var registersInit = Enumerable.Range(0, 3).ToDictionary(x => (char)(x + 65), x => inputs[x]);
+var registersInit = Enumerable.Range(0, 3).ToDictionary(x => (char)(x + 65), x => (long)inputs[x]);
 var program = inputs.Skip(3).ToList();
 var programHash = string.Join(",", program);
-
-for (int j = 0; ; j++)
+var sb = new StringBuilder();
+for (long j = 10; j < 10_000_000; j++)
 {
+    program = Convert.ToString(j, 8).ToArray().Skip(3).Select(x => (int)x).ToList();
     if (j % 100_000 == 0)
     {
-        Console.WriteLine(j);
+        Console.WriteLine(Convert.ToString(j, 8));
     }
     var registers = registersInit.ToDictionary(x => x.Key, x => x.Value);
     registers['A'] = j;
 
-    var output = new List<int>();
+    var output = new List<long>();
     for (int pointer = 0; pointer < program.Count; pointer = pointer + 2)
     {
-        int GetValue(int n)
+        long GetValue(int n)
         {
             if (n < 4) { return n; }
             if (n == 7) { return 9999; }
@@ -78,15 +82,24 @@ for (int j = 0; ; j++)
         }
 
     }
-    var outputHash = string.Join(",", output);
+    var outputHash = long.Parse(string.Join("", output)).ToString("#,0", new NumberFormatInfo { NumberGroupSeparator = " " });
+
+    if (j.ToString().Length == output.Count || true)
+    {
+        var str = $"{Convert.ToString(j, 8)} ({j}) {outputHash} {j.ToString().Length == output.Count}";
+        sb.AppendLine(str);
+        //Console.WriteLine(str);
+    }
     if (outputHash == programHash)
     {
         result = j;
         break;
     }
+    //2411750314445530
 }
 
-
+var qqqq = sb.ToString();
+File.WriteAllText(@"C:\Users\Jan\Desktop\kerstboom.txt", qqqq);
 
 timer.Stop();
 Console.WriteLine(result); // until 553400000
