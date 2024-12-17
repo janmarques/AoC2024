@@ -38,20 +38,20 @@ var result = 0l;
 
 var inputs = input.Replace(Environment.NewLine, "").Replace("Register A: ", "").Replace("Register B: ", ",").Replace("Register C: ", ",").Replace("Program: ", ",").Replace(" ", "").Split(',').Select(int.Parse).ToList();
 
+// Heavily based on https://github.com/dmitry-shechtman/aoc2024/blob/main/day17/Program.cs
 
-var registersInit = Enumerable.Range(0, 3).ToDictionary(x => (char)(x + 65), x => (long)inputs[x]);
-var program = inputs.Skip(3).ToList();
-var programHash = string.Join(",", program);
-var sb = new StringBuilder();
-for (long j = 10; j < 10_000_000; j++)
+result = Play(202975183645226, 0, 0);
+
+
+long Play(long regA, long regB, long regC)
 {
-    program = Convert.ToString(j, 8).ToArray().Skip(3).Select(x => (int)x).ToList();
-    if (j % 100_000 == 0)
-    {
-        Console.WriteLine(Convert.ToString(j, 8));
-    }
+    var registersInit = Enumerable.Range(0, 3).ToDictionary(x => (char)(x + 65), x => (long)inputs[x]);
+    var program = inputs.Skip(3).ToList();
+
     var registers = registersInit.ToDictionary(x => x.Key, x => x.Value);
-    registers['A'] = j;
+    registers['A'] = regA;
+    registers['B'] = regB;
+    registers['C'] = regC;
 
     var output = new List<long>();
     for (int pointer = 0; pointer < program.Count; pointer = pointer + 2)
@@ -82,24 +82,10 @@ for (long j = 10; j < 10_000_000; j++)
         }
 
     }
-    var outputHash = long.Parse(string.Join("", output)).ToString("#,0", new NumberFormatInfo { NumberGroupSeparator = " " });
-
-    if (j.ToString().Length == output.Count || true)
-    {
-        var str = $"{Convert.ToString(j, 8)} ({j}) {outputHash} {j.ToString().Length == output.Count}";
-        sb.AppendLine(str);
-        //Console.WriteLine(str);
-    }
-    if (outputHash == programHash)
-    {
-        result = j;
-        break;
-    }
-    //2411750314445530
+    return long.Parse(string.Join("", output));
 }
 
-var qqqq = sb.ToString();
-File.WriteAllText(@"C:\Users\Jan\Desktop\kerstboom.txt", qqqq);
+
 
 timer.Stop();
 Console.WriteLine(result); // until 553400000
