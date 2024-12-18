@@ -1,4 +1,6 @@
-﻿var fullInput =
+﻿using System.Linq;
+
+var fullInput =
 @"49,36
 51,2
 13,8
@@ -3482,56 +3484,67 @@ var smallest = "";
 var input = smallInput;
 input = fullInput;
 //input = smallest;
-var result = 0l;
+var result = 0;
 var timer = System.Diagnostics.Stopwatch.StartNew();
 
 var parsed = input.Split(Environment.NewLine).Select(x => x.Split(',').Select(int.Parse).ToArray()).ToArray();
 var max = parsed.SelectMany(x => x).Max();
 
-var grid = Enumerable.Range(0, max + 1).Select(x => new bool[max + 1]).ToArray();
 
-foreach (var line in parsed.Take(1024))
+for (result = parsed.Length - 1; ; result--)
+//for (result = 3000; ; result--)
 {
-    grid[line[1]][line[0]] = true;
-}
+    Console.WriteLine(result);
+    var grid = Enumerable.Range(0, max + 1).Select(x => new bool[max + 1]).ToArray();
+    foreach (var line in parsed.Take(result))
+    {
+        grid[line[1]][line[0]] = true;
+    }
 
-var withCoords = grid.Select((r, i) => r.Select((c, j) => (x: j, y: i, val: c))).SelectMany(x => x).ToArray();
+    var withCoords = grid.Select((r, i) => r.Select((c, j) => (x: j, y: i, val: c))).SelectMany(x => x).ToArray();
 
-PrintGrid2(withCoords, x => x.x, x => x.y, x => x.val ? "#" : ".");
+    //PrintGrid2(withCoords, x => x.x, x => x.y, x => x.val ? "#" : ".");
 
-var directions = new[] {
+    var directions = new[] {
     (icon: 'E', x: 1, y: 0),
     (icon: 'W', x: -1, y: 0),
     (icon: 'N', x: 0, y: -1),
     (icon: 'S', x: 0, y: 1),
 };
 
-var start = (0, 0);
-var target = (max, max);
-var distances = withCoords.Where(x => !x.val).Select(x => (x.x, x.y)).ToDictionary(x => x, _ => (visited: false, distance: int.MaxValue));
-distances[start] = (false, 0);
+    var start = (0, 0);
+    var target = (max, max);
+    var distances = withCoords.Where(x => !x.val).Select(x => (x.x, x.y)).ToDictionary(x => x, _ => (visited: false, distance: int.MaxValue));
+    distances[start] = (false, 0);
 
-var isStart = true;
-while (true)
-{
-    var (currentNode, (visited, distance)) = distances.Where(x => x.Value.distance < int.MaxValue && !x.Value.visited).OrderBy(x => x.Value.distance).FirstOrDefault();
-    if (currentNode == default && !isStart) { break; }
-    isStart = false;
-
-    foreach (var direction in directions)
+    var isStart = true;
+    while (true)
     {
-        var other = distances.SingleOrDefault(dis => !dis.Value.visited && dis.Key.x == currentNode.x + direction.x && dis.Key.y == currentNode.y + direction.y);
-        if (other.Key == default) { continue; }
-        var cost = 1;
-        var newTotal = distance + cost;
-        var entry = distances[other.Key];
-        entry.distance = Math.Min(distances[other.Key].distance, newTotal);
-        distances[other.Key] = entry;
+        var (currentNode, (visited, distance)) = distances.Where(x => x.Value.distance < int.MaxValue && !x.Value.visited).OrderBy(x => x.Value.distance).FirstOrDefault();
+        if (currentNode == default && !isStart) { break; }
+        isStart = false;
+
+        foreach (var direction in directions)
+        {
+            var other = distances.SingleOrDefault(dis => !dis.Value.visited && dis.Key.x == currentNode.x + direction.x && dis.Key.y == currentNode.y + direction.y);
+            if (other.Key == default) { continue; }
+            var cost = 1;
+            var newTotal = distance + cost;
+            var entry = distances[other.Key];
+            entry.distance = Math.Min(distances[other.Key].distance, newTotal);
+            distances[other.Key] = entry;
+        }
+        distances[currentNode] = (true, distance);
     }
-    distances[currentNode] = (true, distance);
+
+    if (distances[target].distance != int.MaxValue)
+    {
+        var badLine = parsed.ElementAt(result);
+        Console.WriteLine($"{badLine[0]},{badLine[1]}");
+        break;
+    }
 }
 
-result = distances[target].distance;
 
 timer.Stop();
 Console.WriteLine(result);
