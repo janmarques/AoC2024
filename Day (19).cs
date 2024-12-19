@@ -400,8 +400,7 @@ urugguuguwgbwurwbwrrurbuwgwgrbwurbbgrbbrgrwbuwwburbbgruwr
 bgrugbwwuggrrwgrbbrgrggubrwwuuuurggrrgurggbbr
 bruuwbruurwugwubbguwurbububgrgrrwugburrwurgb
 wwuwgbbuuubwwguwwugrrwbgrwguggugguuwbgubgrwu
-grbgrgbuwgbuwburwrurubrguwrrbbgwuuwgruurburwwwubbrrurgwbgrg
-";
+grbgrgbuwgbuwburwrurubrguwrrbbgwuuwgruurburwwwubbrrurgwbgrg";
 
 var smallInput =
 @"r, wr, b, g, bwu, rb, gb, br
@@ -425,19 +424,30 @@ var result = 0l;
 
 var lines = input.Split(Environment.NewLine);
 var patterns = lines.First().Split(", ").ToList();
-var potentialDesigns = lines.Skip(2).ToList();
+var potentialDesigns = lines.Skip(2)/*.OrderBy(x => x.Length)*/.ToList();
+var cache = new Dictionary<(string, int), bool>();
 
 result = potentialDesigns.Count(x => Evaluate(x, 0));
 
 bool Evaluate(string design, int position)
 {
+    var key = (design, position);
+    if (!cache.ContainsKey(key))
+    {
+        cache[key] = EvaluateInternal(design, position);
+    }
+    return cache[key];
+}
+
+bool EvaluateInternal(string design, int position)
+{
     if (position == design.Length) { return true; }
     var matching = patterns.Where(x => design.Substring(position).StartsWith(x));
 
-    return matching.Any(x => Evaluate(design, position + x.Length));
+    return matching.Any(x => Evaluate(design.ToString(), position + x.Length));
 }
 
 timer.Stop();
-Console.WriteLine(result);
+Console.WriteLine(result); 
 Console.WriteLine(timer.ElapsedMilliseconds + "ms");
 Console.ReadLine();
