@@ -425,11 +425,11 @@ var result = 0l;
 var lines = input.Split(Environment.NewLine);
 var patterns = lines.First().Split(", ").ToList();
 var potentialDesigns = lines.Skip(2)/*.OrderBy(x => x.Length)*/.ToList();
-var cache = new Dictionary<(string, int), bool>();
+var cache = new Dictionary<(string, int), long>();
 
-result = potentialDesigns.Count(x => Evaluate(x, 0));
+result = potentialDesigns.Sum(x => Evaluate(x, 0));
 
-bool Evaluate(string design, int position)
+long Evaluate(string design, int position)
 {
     var key = (design, position);
     if (!cache.ContainsKey(key))
@@ -439,12 +439,12 @@ bool Evaluate(string design, int position)
     return cache[key];
 }
 
-bool EvaluateInternal(string design, int position)
+long EvaluateInternal(string design, int position)
 {
-    if (position == design.Length) { return true; }
+    if (position == design.Length) { return 1; }
     var matching = patterns.Where(x => design.Substring(position).StartsWith(x));
 
-    return matching.Any(x => Evaluate(design.ToString(), position + x.Length));
+    return matching.Sum(x => Evaluate(design.ToString(), position + x.Length));
 }
 
 timer.Stop();
