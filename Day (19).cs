@@ -424,7 +424,7 @@ var result = 0l;
 
 var lines = input.Split(Environment.NewLine);
 var patterns = lines.First().Split(", ").ToList();
-var potentialDesigns = lines.Skip(2)/*.OrderBy(x => x.Length)*/.ToList();
+var potentialDesigns = lines.Skip(2).OrderBy(x => x.Length).ToList();
 var cache = new Dictionary<(string, int), long>();
 
 result = potentialDesigns.Sum(x => Evaluate(x, 0));
@@ -444,7 +444,7 @@ long EvaluateInternal(string design, int position)
     if (position == design.Length) { return 1; }
     var matching = patterns.Where(x => design.Substring(position).StartsWith(x));
 
-    return matching.Sum(x => Evaluate(design.ToString(), position + x.Length));
+    return matching.Sum(x => Evaluate(design, position + x.Length));
 }
 
 timer.Stop();
