@@ -1,6 +1,7 @@
 ﻿using AoC2023;
 using AoC2024;
 using System.ComponentModel;
+using System.Reflection.Metadata.Ecma335;
 
 var fullInput =
 @"#############################################################################################################################################
@@ -170,38 +171,25 @@ input = fullInput;
 var result = 0;
 var timer = System.Diagnostics.Stopwatch.StartNew();
 
-var wallIndices = input.Select((x, i) => (x, i)).Where(x => x.x == '#').Select(x => x.i).ToList();
+(char[][] grid, int height, int width) = Utils.Parse2DGrid(input);
+var byIndex = grid.Select((x, i) => x.Select((y, j) => ((x: j, y: i), c: y))).SelectMany(x => x);
+((int startX, int startY) start, char _) = byIndex.Single(x => x.c == 'S');
+((int targetX, int targetY) target, char _) = byIndex.Single(x => x.c == 'E');
+var startDct = GetDistanceFrom(start);
+//var targetDct = GetDistanceFrom(target);
+var baseTime = height < 20 ? 84 : 9380;
 
-foreach (var wallIndex in wallIndices)
+Dictionary<(int x, int y), int> GetDistanceFrom((int x, int y) from)
 {
-    var inputCpy = input.Substring(0, wallIndex) + "." + input.Substring(wallIndex + 1);
-    (char[][] grid, int height, int width) = Utils.Parse2DGrid(inputCpy);
-    var byIndex = grid.Select((x, i) => x.Select((y, j) => (x: j, y: i, c: y))).SelectMany(x => x);
-    (int startX, int startY, char _) = byIndex.Single(x => x.c == 'S');
-    (int targetX, int targetY, char _) = byIndex.Single(x => x.c == 'E');
-
-    var start = (startX, startY);
-    var target = (targetX, targetY);
-
-    var baseTime = height < 20 ? 84 : 9380;
-
     var visited = new HashSet<(int x, int y)>();
+    var dct = new Dictionary<(int x, int y), int>();
     var queue = new PriorityQueue<(int x, int y, int length), int>();
-    queue.Enqueue((startX, startY, 0), 0);
-
+    queue.Enqueue((from.x, from.y, 0), 0);
     while (queue.Count > 0)
     {
         var item = queue.Dequeue();
         visited.Add((item.x, item.y));
-
-        if (item.x == targetX && item.y == targetY)
-        {
-            if (baseTime - item.length >= 100)
-            {
-                result++;
-            }
-            break;
-        }
+        dct.Add((item.x, item.y), item.length);
 
         void TryQueue(int newX, int newY)
         {
@@ -219,9 +207,22 @@ foreach (var wallIndex in wallIndices)
             TryQueue(item.x + neighbour.x, item.y + neighbour.y);
         }
     }
-
+    return dct;
 }
 
+foreach (var from in startDct)
+{
+    var targets = startDct.Where(to => Manhatten(from.Key, to.Key) <= 20 && from.Key != to.Key).Where(to => to.Value - from.Value - Manhatten(from.Key, to.Key) >= 100).ToList();
+    foreach (var item in targets)
+    {
+        //Console.WriteLine(from + "" + item);
+        result++;
+    }
+}
+
+
+
+int Manhatten((int x, int y) from, (int x, int y) to) => Math.Abs(from.x - to.x) + Math.Abs(from.y - to.y);
 
 Console.WriteLine(result);
 
