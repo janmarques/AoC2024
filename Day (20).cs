@@ -164,126 +164,64 @@ var smallInput =
 
 
 var input = smallInput;
-//input = fullInput;
+input = fullInput;
 //input = smallest;
+
+var result = 0;
 var timer = System.Diagnostics.Stopwatch.StartNew();
 
-(char[][] grid, int height, int width) = Utils.Parse2DGrid(input);
-var result = int.MaxValue;
-var byIndex = grid.Select((x, i) => x.Select((y, j) => (x: j, y: i, c: y))).SelectMany(x => x);
-(int startX, int startY, char _) = byIndex.Single(x => x.c == 'S');
-(int targetX, int targetY, char _) = byIndex.Single(x => x.c == 'E');
+var wallIndices = input.Select((x, i) => (x, i)).Where(x => x.x == '#').Select(x => x.i).ToList();
 
-var start = (startX, startY);
-var target = (targetX, targetY);
-
-var visited = new HashSet<(int x, int y)>();
-var queue = new PriorityQueue<(int x, int y, int length), int>();
-queue.Enqueue((startX, startY, 0), 0);
-
-while (queue.Count > 0)
+foreach (var wallIndex in wallIndices)
 {
-    var item = queue.Dequeue();
-    visited.Add((item.x, item.y));
+    var inputCpy = input.Substring(0, wallIndex) + "." + input.Substring(wallIndex + 1);
+    (char[][] grid, int height, int width) = Utils.Parse2DGrid(inputCpy);
+    var byIndex = grid.Select((x, i) => x.Select((y, j) => (x: j, y: i, c: y))).SelectMany(x => x);
+    (int startX, int startY, char _) = byIndex.Single(x => x.c == 'S');
+    (int targetX, int targetY, char _) = byIndex.Single(x => x.c == 'E');
 
-    if (item.x == targetX && item.y == targetY)
-    {
-        result = item.length; break;
-    }
+    var start = (startX, startY);
+    var target = (targetX, targetY);
 
-    void TryQueue(int newX, int newY)
+    var baseTime = height < 20 ? 84 : 9380;
+
+    var visited = new HashSet<(int x, int y)>();
+    var queue = new PriorityQueue<(int x, int y, int length), int>();
+    queue.Enqueue((startX, startY, 0), 0);
+
+    while (queue.Count > 0)
     {
-        if (newX < 0 || newY < 0 || newX >= width || newY >= height) { return; }
-        var weight = grid[newY][newX];
-        if (weight == '#') { return; }
-        if (!visited.Contains((newX, newY)))
+        var item = queue.Dequeue();
+        visited.Add((item.x, item.y));
+
+        if (item.x == targetX && item.y == targetY)
         {
-            queue.Enqueue((newX, newY, item.length + 1), item.length + 1);
+            if (baseTime - item.length >= 100)
+            {
+                result++;
+            }
+            break;
+        }
+
+        void TryQueue(int newX, int newY)
+        {
+            if (newX < 0 || newY < 0 || newX >= width || newY >= height) { return; }
+            var weight = grid[newY][newX];
+            if (weight == '#') { return; }
+            if (!visited.Contains((newX, newY)))
+            {
+                queue.Enqueue((newX, newY, item.length + 1), item.length + 1);
+            }
+        }
+
+        foreach (var neighbour in Utils.Directions)
+        {
+            TryQueue(item.x + neighbour.x, item.y + neighbour.y);
         }
     }
 
-    foreach (var neighbour in Utils.Directions)
-    {
-        TryQueue(item.x + neighbour.x, item.y + neighbour.y);
-    }
 }
 
-//var pq = new PrioritySet<(int x, int y, char dir, int dirCount, int length), int>();
-//pq.Enqueue(start, 0);
-//paths.Add(start, new List<(int x, int y)>() { (0, 0) });
-
-//long k = 0;
-
-//var doPaths = true;
-////doPaths = false;
-//while (pq.Count > 0)
-//{
-//    var (x, y, dir, dirCount, length) = pq.Dequeue();
-//    if (k % 100_000 == 0)
-//    {
-//        Console.WriteLine($"k {k} pq {pq.Count} length {length}");
-//    }
-//    k++;
-//    if (length > result)
-//    {
-//        break;
-//    }
-//    if (x == width - 1 && y == height - 1)
-//    {
-//        result = Math.Min(length, result);
-//    }
-
-
-//    //var pathSoFar = paths[(x, y, dir, dirCount, length)];
-
-//    void TryQueue(int newX, int newY, char newDir, int newDirCount)
-//    {
-//        if (newX < 0 || newY < 0 || newX >= width || newY >= height) { return; }
-//        //if (newX < x && newY < x) { return; }
-//        //if (pathSoFar.Contains((newX, newY))) { return; }
-//        var weight = grid[newY][newX];
-//        var newLength = length + weight;
-//        var entry = (newX, newY, newDir, newDirCount, newLength);
-//        pq.Enqueue(entry, newLength);
-//        //paths[entry] = pathSoFar.Union(new[] { (newX, newY) }).ToList();
-
-//    }
-
-//    if (dirCount >= 4)
-//    {
-//        if (dir == 'S' || dir == 'N')
-//        {
-//            TryQueue(x + 1, y, 'E', 1);
-//            TryQueue(x - 1, y, 'W', 1);
-//        }
-//        else
-//        {
-//            TryQueue(x, y + 1, 'S', 1);
-//            TryQueue(x, y - 1, 'N', 1);
-//        }
-//    }
-//    if (dirCount < 10)
-//    {
-//        if (dir == 'S')
-//        {
-//            TryQueue(x, y + 1, 'S', dirCount + 1);
-//        }
-//        else if (dir == 'N')
-//        {
-//            TryQueue(x, y - 1, 'N', dirCount + 1);
-//        }
-//        else if (dir == 'E')
-//        {
-//            TryQueue(x + 1, y, 'E', dirCount + 1);
-//        }
-//        else if (dir == 'W')
-//        {
-//            TryQueue(x - 1, y, 'W', dirCount + 1);
-//        }
-//    }
-
-//    //paths.Remove((x, y, dir, dirCount, length));
-//}
 
 Console.WriteLine(result);
 
@@ -291,64 +229,3 @@ Console.WriteLine(result);
 timer.Stop();
 Console.WriteLine(timer.ElapsedMilliseconds + "ms");
 Console.ReadLine();
-
-
-
-//IEnumerable<(List<(int x, int y)>, (int x, int y, bool isForX))> GetNeighbourPaths(int x, int y)
-//{
-//    var dim1 = new[] { 1, 2, 3, -1, -2, -3 };
-//    var dim2 = new[] { 1, -1 };
-//    var forX = new[] { true, false };
-//    foreach (var item1 in dim1)
-//    {
-//        foreach (var item2 in dim2)
-//        {
-//            foreach (var isForX in forX)
-//            {
-//                var list = new List<(int, int)>();
-//                if (item1 > 0)
-//                {
-//                    for (int i = 1; i <= item1; i++)
-//                    {
-//                        if (isForX)
-//                        {
-//                            list.Add((x + i, y));
-//                        }
-//                        else
-//                        {
-//                            list.Add((x, y + i));
-//                        }
-//                    }
-//                }
-//                else
-//                {
-//                    for (int i = -1; i >= item1; i--)
-//                    {
-//                        if (isForX)
-//                        {
-//                            list.Add((x + i, y));
-//                        }
-//                        else
-//                        {
-//                            list.Add((x, y + i));
-//                        }
-//                    }
-//                }
-
-//                if (isForX)
-//                {
-//                    list.Add((x + item1, y + item2));
-//                }
-//                else
-//                {
-//                    list.Add((x + item2, y + item1));
-//                }
-
-//                //if (item2 < 0) { list.Reverse(); }
-
-//                yield return (list, (Math.Abs(item1), Math.Abs(item2), isForX));
-//            }
-//        }
-//    }
-//}
-
