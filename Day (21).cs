@@ -62,20 +62,21 @@ var asdasd3 = new string(ReverseCheck(asdasd2, doorkeypad, null).ToArray());
 
 var codes = input.Split(Environment.NewLine).Select(x => (code: x, numeric: int.Parse(x.Substring(0, 3)))).ToList();
 
+var betweenRobotCount = 2;
 foreach (var code in codes)
 {
     var d1 = GetLongCompletePaths(doorkeypad, code.code);
 
-    var d2 = d1.SelectMany(x => GetLongCompletePaths(robotKeypad, x)).ToList();
-    var minD2 = d2.Min(x => x.Length);
-    d2 = d2.Where(x => x.Length == minD2).ToList();
+    for (int i = 0; i < betweenRobotCount; i++)
+    {
+        d1 = d1.SelectMany(x => GetLongCompletePaths(robotKeypad, x)).ToList();
+        var min = d1.Min(x => x.Length);
+        d1 = d1.Where(x => x.Length == min).ToList();
+    }
 
-    var d3 = d2.SelectMany(x => GetLongCompletePaths(robotKeypad, x)).ToList();
-    var minD3 = d3.Min(x => x.Length);
-    d3 = d3.Where(x => x.Length == minD3).ToList();
-    var d3Line = d3.First();
+    var somePath = d1.First();
 
-    result += d3Line.Length * code.numeric;
+    result += somePath.Length * code.numeric;
 }
 
 IEnumerable<char> ReverseCheck(string instruction, List<(int x, int y, char c)> myGrid, List<(int x, int y, char c)> nextGrid)
