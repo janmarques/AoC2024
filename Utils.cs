@@ -103,4 +103,15 @@ public static class Utils
     }
 
     static public int Manhatten((int x, int y) from, (int x, int y) to) => Math.Abs(from.x - to.x) + Math.Abs(from.y - to.y);
+
+    static Dictionary<string, int> Counters = new Dictionary<string, int>();
+    static public void Counter(string name, int threshold = 10000)
+    {
+        if (!Counters.ContainsKey(name)) { Counters[name] = 0; }
+        Counters[name]++;
+        if (Counters[name] % threshold == 0)
+        {
+            Console.WriteLine($"{name} {Counters[name]}");
+        }
+    }
 }

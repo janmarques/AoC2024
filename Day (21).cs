@@ -3,6 +3,7 @@ using AoC2024;
 using System.IO;
 using System.Runtime.ConstrainedExecution;
 using System.Security.Cryptography;
+using static AoC2023.Utils;
 
 var fullInput =
 @"286A
@@ -18,23 +19,12 @@ var smallInput =
 456A
 379A";
 
-var smallest =
-@"001A
-002A
-003A
-004A
-005A
-006A
-007A
-008A
-009A";
-
-
 var input = smallInput;
 input = fullInput;
 //input = smallest;
 
 var legalPathsCache = new Dictionary<string, List<string>>();
+var longCompletePathsCache = new Dictionary<string, List<string>>();
 
 var timer = System.Diagnostics.Stopwatch.StartNew();
 
@@ -55,12 +45,6 @@ var robotKeypadStr =
 
 var directions = new List<(char c, int x, int y)> { ('^', 0, -1), ('v', 0, 1), ('<', -1, 0), ('>', 1, 0) };
 var robotKeypad = Utils.ParseCoordGrid(robotKeypadStr).ToList();
-
-
-var hmm = "v<A<AA^>>AA<Av>A^AvA^Av<<A^>>AAvA^Av<A^>AA<A>Av<A<A^>>AAA<Av>A^A";
-var asdasd = new string(ReverseCheck(hmm, robotKeypad, null).ToArray());
-var asdasd2 = new string(ReverseCheck(asdasd, robotKeypad, null).ToArray());
-var asdasd3 = new string(ReverseCheck(asdasd2, doorkeypad, null).ToArray());
 
 
 var codes = input.Split(Environment.NewLine).Select(x => (code: x, numeric: int.Parse(x.Substring(0, 3)))).ToList();
@@ -84,28 +68,20 @@ foreach (var code in codes)
     result += somePath.Length * code.numeric;
 }
 
-IEnumerable<char> ReverseCheck(string instruction, List<(int x, int y, char c)> myGrid, List<(int x, int y, char c)> nextGrid)
+List<string> GetLongCompletePaths(List<(int x, int y, char c)> grid, string search) //  cache not used. Can we split up?
 {
-    var pointer = myGrid.Single(x => x.c == 'A');
-    for (int i = 0; i < instruction.Length; i++)
+    var key = $"{grid.Count}|{search}";
+    if (!longCompletePathsCache.ContainsKey(key))
     {
-        switch (instruction[i])
-        {
-            case 'A':
-                yield return myGrid.Single(x => x.x == pointer.x && x.y == pointer.y).c;
-                break;
-            case 'v': pointer.y++; break;
-            case '^': pointer.y--; break;
-            case '>': pointer.x++; break;
-            case '<': pointer.x--; break;
-            default: throw new NotImplementedException();
-        }
-
+        longCompletePathsCache[key] = GetLongCompletePathsInt(grid, search);
     }
+    else
+    {
+        Utils.Counter("cachehit-GetLongCompletePaths", 100);
+    }
+    return longCompletePathsCache[key];
 }
-
-
-List<string> GetLongCompletePaths(List<(int x, int y, char c)> grid, string search)
+List<string> GetLongCompletePathsInt(List<(int x, int y, char c)> grid, string search)
 {
     var start = grid.Single(x => x.c == 'A');
     var forbidden = grid.Single(x => x.c == '.');
@@ -118,7 +94,7 @@ List<string> GetLongCompletePaths(List<(int x, int y, char c)> grid, string sear
     {
         (string remaining, string path, int x, int y, int length) = pq.Dequeue();
         if (remaining == "") { paths.Add(path); continue; }
-        var target = grid.Single(x => x.c == remaining.First());
+        var target = grid.Single(x => x.c == remaining[0]);
         foreach (var item in GetLegalPaths((x, y), (target.x, target.y), grid))
         {
             var newPath = path + item + "A";
@@ -138,28 +114,47 @@ List<string> GetLegalPaths((int x, int y) a, (int x, int y) b, List<(int x, int 
     {
         legalPathsCache[key] = GetLegalPathsInt(a, b, grid);
     }
+    else
+    {
+        //Utils.Counter("cachehit-GetLegalPaths", 1000000);
+    }
     return legalPathsCache[key];
 }
 List<string> GetLegalPathsInt((int x, int y) a, (int x, int y) b, List<(int x, int y, char c)> grid)
 {
-    var chars = GetLinkingCharacters(a, b).ToList();
+    (int up, int down, int left, int right) = GetLinkingCharacters(a, b);
     var paths = new List<string>();
     var forbidden = grid.Single(x => x.c == '.');
 
-    ComposePaths("", chars, a.x, a.y);
-    void ComposePaths(string s, List<char> remaining, int x, int y)
+    ComposePaths("", up, down, left, right, a.x, a.y);
+    void ComposePaths(string s, int up, int down, int left, int right, int x, int y)
     {
-        if (forbidden.x == x && forbidden.y == y) { return; }
-        if (!remaining.Any())
+        if (forbidden.x == x && forbidden.y == y)
+        {
+            return;
+        }
+        if (up == 0 && down == 0 && left == 0 && right == 0)
         {
             paths.Add(s);
         }
-        foreach (var item in remaining.Distinct())
+        else
         {
-            var direction = directions.Single(x => x.c == item);
-            var cpy = remaining.ToList();
-            cpy.RemoveAt(remaining.IndexOf(item));
-            ComposePaths(s + item, cpy, x + direction.x, y + direction.y);
+            if (up > 0)
+            {
+                ComposePaths(s + '^', up - 1, down, left, right, x, y - 1);
+            }
+            if (down > 0)
+            {
+                ComposePaths(s + 'v', up, down - 1, left, right, x, y + 1);
+            }
+            if (left > 0)
+            {
+                ComposePaths(s + '>', up, down, left - 1, right, x + 1, y);
+            }
+            if (right > 0)
+            {
+                ComposePaths(s + '<', up, down, left, right - 1, x - 1, y);
+            }
         }
     }
 
@@ -167,38 +162,36 @@ List<string> GetLegalPathsInt((int x, int y) a, (int x, int y) b, List<(int x, i
 }
 
 
-IEnumerable<char> GetLinkingCharacters((int x, int y) a, (int x, int y) b)
+(int up, int down, int left, int right) GetLinkingCharacters((int x, int y) a, (int x, int y) b)
 {
-    while (a.x < b.x)
-    {
-        yield return '>';
-        a.x++;
-    }
-    while (a.x > b.x)
-    {
-        yield return '<';
-        a.x--;
-    }
-    while (a.y < b.y)
-    {
-        yield return 'v';
-        a.y++;
-    }
-    while (a.y > b.y)
-    {
-        yield return '^';
-        a.y--;
-    }
-}
-
-
-
-foreach (var line in input.Split(Environment.NewLine))
-{
-
+    var up = Math.Max(0, a.y - b.y);
+    var down = Math.Max(0, b.y - a.y);
+    var right = Math.Max(0, a.x - b.x);
+    var left = Math.Max(0, b.x - a.x);
+    return (up, down, left, right);
 }
 
 timer.Stop();
 Console.WriteLine(result);
 Console.WriteLine(timer.ElapsedMilliseconds + "ms");
 Console.ReadLine();
+
+//IEnumerable<char> ReverseCheck(string instruction, List<(int x, int y, char c)> myGrid, List<(int x, int y, char c)> nextGrid)
+//{
+//    var pointer = myGrid.Single(x => x.c == 'A');
+//    for (int i = 0; i < instruction.Length; i++)
+//    {
+//        switch (instruction[i])
+//        {
+//            case 'A':
+//                yield return myGrid.Single(x => x.x == pointer.x && x.y == pointer.y).c;
+//                break;
+//            case 'v': pointer.y++; break;
+//            case '^': pointer.y--; break;
+//            case '>': pointer.x++; break;
+//            case '<': pointer.x--; break;
+//            default: throw new NotImplementedException();
+//        }
+
+//    }
+//}
