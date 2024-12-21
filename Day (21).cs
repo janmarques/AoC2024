@@ -1,6 +1,8 @@
 ﻿using AoC2023;
 using AoC2024;
 using System.IO;
+using System.Numerics;
+using System.Runtime.CompilerServices;
 using System.Runtime.ConstrainedExecution;
 using System.Security.Cryptography;
 using static AoC2023.Utils;
@@ -19,8 +21,11 @@ var smallInput =
 456A
 379A";
 
+var smallest =
+    @"1A";
+
 var input = smallInput;
-input = fullInput;
+//input = fullInput;
 //input = smallest;
 
 var legalPathsCache = new Dictionary<string, List<string>>();
@@ -28,7 +33,7 @@ var longCompletePathsCache = new Dictionary<string, List<string>>();
 
 var timer = System.Diagnostics.Stopwatch.StartNew();
 
-var result = 0l;
+var result = BigInteger.Zero;
 
 var doorKeypadStr =
 @"789
@@ -46,30 +51,78 @@ var robotKeypadStr =
 var directions = new List<(char c, int x, int y)> { ('^', 0, -1), ('v', 0, 1), ('<', -1, 0), ('>', 1, 0) };
 var robotKeypad = Utils.ParseCoordGrid(robotKeypadStr).ToList();
 
+var xxx = new string(ReverseCheck("v<A<AA>>^AvAA^<A>Av<<A>>^AvA^Av<A>^A<Av<A>^>AvA^Av<A<A>>^AvA^<A>A", robotKeypad).ToArray());
+var xx = new string(ReverseCheck("v<<A>>^A<A>AvA^<A>Av<A>^A", robotKeypad).ToArray());
+var das = new string(ReverseCheck("<A^A>^AvA", doorkeypad).ToArray());
 
-var codes = input.Split(Environment.NewLine).Select(x => (code: x, numeric: int.Parse(x.Substring(0, 3)))).ToList();
+var codes = input.Split(Environment.NewLine).Select(x => (code: x, numeric: int.Parse(new string(x.SkipLast(1).ToArray())))).ToList();
+
+
+var enableCache = false;
+enableCache = true;
 
 var betweenRobotCount = 2;
 foreach (var code in codes)
 {
-    var d1 = GetLongCompletePaths(doorkeypad, code.code);
+    var d1 = GetLongCompletePathsSplit(doorkeypad, code.code);
+
+    Console.WriteLine($"{code.code} {d1.First()}");
 
     for (int i = 0; i < betweenRobotCount; i++)
     {
-        d1 = d1.SelectMany(x => GetLongCompletePaths(robotKeypad, x)).ToList();
+        d1 = d1.SelectMany(x => GetLongCompletePathsSplit(robotKeypad, x)).ToList();
         var min = d1.Min(x => x.Length);
-        Console.WriteLine($"{code.code} {i} = {d1.Count}, {min}");
         d1 = d1.Where(x => x.Length == min).ToList();
-        Console.WriteLine($"{code.code} {i} = {d1.Count}, {min}");
+        Console.WriteLine($"{code.code} {i}");
     }
 
     var somePath = d1.First();
 
-    result += somePath.Length * code.numeric;
+    result += new BigInteger(somePath.Length) * new BigInteger(code.numeric);
+}
+
+List<string> GetLongCompletePathsSplit(List<(int x, int y, char c)> grid, string search) //  cache not used. Can we split up?
+{
+    var subBlocks = new List<List<string>>();
+    var blockSize = 0;
+    for (int i = 0; i < search.Length; i++)
+    {
+        if (search[i] == 'A')
+        {
+            var other = GetLongCompletePaths(grid, search.Substring(i - blockSize, blockSize + 1));
+            subBlocks.Add(other);
+            blockSize = 0;
+        }
+        else
+        {
+            blockSize++;
+        }
+    }
+ 
+    var paths = new List<string>();
+    //paths.Add(string.Join("", subBlocks.SelectMany(x => x.OrderBy(y=> y.Length)).First()));
+
+
+    ComposePaths("", 0);
+    void ComposePaths(string res, int pos)
+    {
+        if (pos == subBlocks.Count)
+        {
+            paths.Add(res);
+            return;
+        }
+        foreach (var item in subBlocks[pos])
+        {
+            ComposePaths(res + item, pos + 1);
+        }
+    }
+
+    return paths;
 }
 
 List<string> GetLongCompletePaths(List<(int x, int y, char c)> grid, string search) //  cache not used. Can we split up?
 {
+    if (!enableCache) { return GetLongCompletePathsInt(grid, search); }
     var key = $"{grid.Count}|{search}";
     if (!longCompletePathsCache.ContainsKey(key))
     {
@@ -77,7 +130,7 @@ List<string> GetLongCompletePaths(List<(int x, int y, char c)> grid, string sear
     }
     else
     {
-        Utils.Counter("cachehit-GetLongCompletePaths", 100);
+        //Utils.Counter("cachehit-GetLongCompletePaths", 100);
     }
     return longCompletePathsCache[key];
 }
@@ -109,6 +162,7 @@ List<string> GetLongCompletePathsInt(List<(int x, int y, char c)> grid, string s
 
 List<string> GetLegalPaths((int x, int y) a, (int x, int y) b, List<(int x, int y, char c)> grid)
 {
+    if (!enableCache) { return GetLegalPathsInt(a, b, grid); }
     var key = $"{grid.Count}|{a.x},{a.y}|{b.x},{b.y}";
     if (!legalPathsCache.ContainsKey(key))
     {
@@ -176,22 +230,22 @@ Console.WriteLine(result);
 Console.WriteLine(timer.ElapsedMilliseconds + "ms");
 Console.ReadLine();
 
-//IEnumerable<char> ReverseCheck(string instruction, List<(int x, int y, char c)> myGrid, List<(int x, int y, char c)> nextGrid)
-//{
-//    var pointer = myGrid.Single(x => x.c == 'A');
-//    for (int i = 0; i < instruction.Length; i++)
-//    {
-//        switch (instruction[i])
-//        {
-//            case 'A':
-//                yield return myGrid.Single(x => x.x == pointer.x && x.y == pointer.y).c;
-//                break;
-//            case 'v': pointer.y++; break;
-//            case '^': pointer.y--; break;
-//            case '>': pointer.x++; break;
-//            case '<': pointer.x--; break;
-//            default: throw new NotImplementedException();
-//        }
+IEnumerable<char> ReverseCheck(string instruction, List<(int x, int y, char c)> myGrid)
+{
+    var pointer = myGrid.Single(x => x.c == 'A');
+    for (int i = 0; i < instruction.Length; i++)
+    {
+        switch (instruction[i])
+        {
+            case 'A':
+                yield return myGrid.Single(x => x.x == pointer.x && x.y == pointer.y).c;
+                break;
+            case 'v': pointer.y++; break;
+            case '^': pointer.y--; break;
+            case '>': pointer.x++; break;
+            case '<': pointer.x--; break;
+            default: throw new NotImplementedException();
+        }
 
-//    }
-//}
+    }
+}
