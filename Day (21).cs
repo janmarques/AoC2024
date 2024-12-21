@@ -2,6 +2,7 @@
 using AoC2024;
 using System.IO;
 using System.Runtime.ConstrainedExecution;
+using System.Security.Cryptography;
 
 var fullInput =
 @"286A
@@ -32,6 +33,8 @@ var smallest =
 var input = smallInput;
 input = fullInput;
 //input = smallest;
+
+var legalPathsCache = new Dictionary<string, List<string>>();
 
 var timer = System.Diagnostics.Stopwatch.StartNew();
 
@@ -71,7 +74,9 @@ foreach (var code in codes)
     {
         d1 = d1.SelectMany(x => GetLongCompletePaths(robotKeypad, x)).ToList();
         var min = d1.Min(x => x.Length);
+        Console.WriteLine($"{code.code} {i} = {d1.Count}, {min}");
         d1 = d1.Where(x => x.Length == min).ToList();
+        Console.WriteLine($"{code.code} {i} = {d1.Count}, {min}");
     }
 
     var somePath = d1.First();
@@ -105,7 +110,7 @@ List<string> GetLongCompletePaths(List<(int x, int y, char c)> grid, string sear
     var start = grid.Single(x => x.c == 'A');
     var forbidden = grid.Single(x => x.c == '.');
 
-    var pq = new PrioritySet<(string remaining, string path, int x, int y, int length), int>();
+    var pq = new PriorityQueue<(string remaining, string path, int x, int y, int length), int>();
     pq.Enqueue((search, "", start.x, start.y, 0), 0);
 
     var paths = new List<string>();
@@ -127,6 +132,15 @@ List<string> GetLongCompletePaths(List<(int x, int y, char c)> grid, string sear
 }
 
 List<string> GetLegalPaths((int x, int y) a, (int x, int y) b, List<(int x, int y, char c)> grid)
+{
+    var key = $"{grid.Count}|{a.x},{a.y}|{b.x},{b.y}";
+    if (!legalPathsCache.ContainsKey(key))
+    {
+        legalPathsCache[key] = GetLegalPathsInt(a, b, grid);
+    }
+    return legalPathsCache[key];
+}
+List<string> GetLegalPathsInt((int x, int y) a, (int x, int y) b, List<(int x, int y, char c)> grid)
 {
     var chars = GetLinkingCharacters(a, b).ToList();
     var paths = new List<string>();
