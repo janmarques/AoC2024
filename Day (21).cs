@@ -84,23 +84,14 @@ foreach (var code in codes)
 List<string> GetLongCompletePathsSplit(List<(int x, int y, char c)> grid, string search) //  cache not used. Can we split up?
 {
     var subBlocks = new List<List<string>>();
-    var blockSize = 0;
-    for (int i = 0; i < search.Length; i++)
+    var chunks = search.Split('A').SkipLast(1).Select(x => x + 'A').ToList();
+    foreach (var chunk in chunks)
     {
-        if (search[i] == 'A')
-        {
-            var other = GetLongCompletePaths(grid, search.Substring(i - blockSize, blockSize + 1));
-            subBlocks.Add(other);
-            blockSize = 0;
-        }
-        else
-        {
-            blockSize++;
-        }
+        var other = GetLongCompletePaths(grid, chunk);
+        subBlocks.Add(other);
     }
- 
+
     var paths = new List<string>();
-    //paths.Add(string.Join("", subBlocks.SelectMany(x => x.OrderBy(y=> y.Length)).First()));
 
 
     ComposePaths("", 0);
