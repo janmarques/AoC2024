@@ -1,4 +1,6 @@
 ﻿using AoC2023;
+using AoC2024;
+using System.IO;
 using System.Runtime.ConstrainedExecution;
 
 var fullInput =
@@ -15,9 +17,20 @@ var smallInput =
 456A
 379A";
 
+var smallest =
+@"001A
+002A
+003A
+004A
+005A
+006A
+007A
+008A
+009A";
+
 
 var input = smallInput;
-//input = fullInput;
+input = fullInput;
 //input = smallest;
 
 var timer = System.Diagnostics.Stopwatch.StartNew();
@@ -36,6 +49,8 @@ var robotKeypadStr =
 @".^A
 <v>";
 
+
+var directions = new List<(char c, int x, int y)> { ('^', 0, -1), ('v', 0, 1), ('<', -1, 0), ('>', 1, 0) };
 var robotKeypad = Utils.ParseCoordGrid(robotKeypadStr).ToList();
 
 
@@ -49,26 +64,18 @@ var codes = input.Split(Environment.NewLine).Select(x => (code: x, numeric: int.
 
 foreach (var code in codes)
 {
-    var d1 = new string(Type(code.code, doorkeypad).ToArray());
-    var d2 = new string(Type(d1, robotKeypad).ToArray());
-    var d3 = new string(Type(d2, robotKeypad).ToArray());
+    var d1 = GetLongCompletePaths(doorkeypad, code.code);
 
-    Console.WriteLine(d3);
-    Console.WriteLine(d2);
-    Console.WriteLine(d1);
-    Console.WriteLine(code.code);
+    var d2 = d1.SelectMany(x => GetLongCompletePaths(robotKeypad, x)).ToList();
+    var minD2 = d2.Min(x => x.Length);
+    d2 = d2.Where(x => x.Length == minD2).ToList();
 
-    //var aaa = new string(ReverseCheck(d1, doorkeypad, null).ToArray());
-    //var bbb = new string(ReverseCheck(d2, robotKeypad, null).ToArray());
-    //var ccc = new string(ReverseCheck(d3, robotKeypad, null).ToArray());
-    //Console.WriteLine($"{aaa == code.code}");
-    //Console.WriteLine($"{bbb == d1}");
-    //Console.WriteLine($"{ccc == d2}");
+    var d3 = d2.SelectMany(x => GetLongCompletePaths(robotKeypad, x)).ToList();
+    var minD3 = d3.Min(x => x.Length);
+    d3 = d3.Where(x => x.Length == minD3).ToList();
+    var d3Line = d3.First();
 
-
-    Console.WriteLine($"{code.code}: {d3}");
-
-    result += d3.Length * code.numeric;
+    result += d3Line.Length * code.numeric;
 }
 
 IEnumerable<char> ReverseCheck(string instruction, List<(int x, int y, char c)> myGrid, List<(int x, int y, char c)> nextGrid)
@@ -91,115 +98,81 @@ IEnumerable<char> ReverseCheck(string instruction, List<(int x, int y, char c)> 
     }
 }
 
-IEnumerable<char> Type(string instruction, List<(int x, int y, char c)> grid)
+
+List<string> GetLongCompletePaths(List<(int x, int y, char c)> grid, string search)
 {
-    var currentLinking = default(char);
-    var pointer = grid.Single(x => x.c == 'A');
+    var start = grid.Single(x => x.c == 'A');
     var forbidden = grid.Single(x => x.c == '.');
-    for (int i = 0; i < instruction.Length; i++)
+
+    var pq = new PrioritySet<(string remaining, string path, int x, int y, int length), int>();
+    pq.Enqueue((search, "", start.x, start.y, 0), 0);
+
+    var paths = new List<string>();
+    while (pq.Count > 0)
     {
-        var target = grid.Single(x => x.c == instruction[i]);
-
-        var lastLink = default(char);
-        if (i + 1 < instruction.Length)
+        (string remaining, string path, int x, int y, int length) = pq.Dequeue();
+        if (remaining == "") { paths.Add(path); continue; }
+        var target = grid.Single(x => x.c == remaining.First());
+        foreach (var item in GetLegalPaths((x, y), (target.x, target.y), grid))
         {
-            var next = grid.Single(x => x.c == instruction[i + 1]);
-            var links = GetLinkingCharacters(target, next).Distinct().Where(x => x != currentLinking).ToList(); // mss moet dat niet except, en indien genoeg chars kan het aan begin en einde gebruikt worden
-            lastLink = links.LastOrDefault();
+            var newPath = path + item + "A";
+            pq.Enqueue((remaining.Substring(1), newPath, target.x, target.y, newPath.Length), newPath.Length);
         }
-
-        var todo = new[] { 'v', '^', '<', '>' };
-
-        var order = new List<char>();
-        order.Add(currentLinking);
-        order.AddRange(todo.Where(x => x != lastLink));
-        if (lastLink != default) { order.Add(lastLink); }
-
-        currentLinking = lastLink;
-
-        while ((pointer.x, pointer.y) != (target.x, target.y))
-        {
-            foreach (var item in order)
-            {
-                foreach (var link in Do(item))
-                {
-                    yield return link;
-                }
-            }
-        }
-
-
-        IEnumerable<char> Do(char c)
-        {
-
-            bool IsForbidden(int x, int y) => forbidden.x == x && forbidden.y == y;
-            if (c == '>')
-            {
-                while (pointer.x < target.x)
-                {
-                    if (IsForbidden(pointer.x + 1, pointer.y)) { break; }
-                    yield return '>';
-                    pointer.x++;
-                }
-            }
-            if (c == '<')
-            {
-                while (pointer.x > target.x)
-                {
-                    if (IsForbidden(pointer.x - 1, pointer.y)) { break; }
-                    yield return '<';
-                    pointer.x--;
-                }
-            }
-            if (c == 'v')
-            {
-                while (pointer.y < target.y)
-                {
-                    if (IsForbidden(pointer.x, pointer.y + 1)) { break; }
-                    yield return 'v';
-                    pointer.y++;
-                }
-            }
-            if (c == '^')
-            {
-                while (pointer.y > target.y)
-                {
-                    if (IsForbidden(pointer.x, pointer.y - 1)) { break; }
-                    yield return '^';
-                    pointer.y--;
-                }
-            }
-        }
-
-        if ((pointer.x, pointer.y) != (target.x, target.y)) { throw new Exception(); }
-
-
-        yield return 'A';
-        pointer = target;
     }
+
+    var shortest = paths.Min(x => x.Length);
+
+    return paths.Where(x => x.Length == shortest).ToList();
 }
 
-IEnumerable<char> GetLinkingCharacters((int x, int y, char c) pointer, (int x, int y, char c) target)
+List<string> GetLegalPaths((int x, int y) a, (int x, int y) b, List<(int x, int y, char c)> grid)
 {
-    while (pointer.x < target.x)
+    var chars = GetLinkingCharacters(a, b).ToList();
+    var paths = new List<string>();
+    var forbidden = grid.Single(x => x.c == '.');
+
+    ComposePaths("", chars, a.x, a.y);
+    void ComposePaths(string s, List<char> remaining, int x, int y)
+    {
+        if (forbidden.x == x && forbidden.y == y) { return; }
+        if (!remaining.Any())
+        {
+            paths.Add(s);
+        }
+        foreach (var item in remaining.Distinct())
+        {
+            var direction = directions.Single(x => x.c == item);
+            var cpy = remaining.ToList();
+            cpy.RemoveAt(remaining.IndexOf(item));
+            ComposePaths(s + item, cpy, x + direction.x, y + direction.y);
+        }
+    }
+
+    return paths;
+}
+
+
+IEnumerable<char> GetLinkingCharacters((int x, int y) a, (int x, int y) b)
+{
+    while (a.x < b.x)
     {
         yield return '>';
-        pointer.x++;
+        a.x++;
     }
-    while (pointer.x > target.x)
+    while (a.x > b.x)
     {
         yield return '<';
-        pointer.x--;
+        a.x--;
     }
-    while (pointer.y < target.y)
+    while (a.y < b.y)
     {
         yield return 'v';
-        pointer.y++;
+        a.y++;
     }
-    while (pointer.y > target.y)
+    while (a.y > b.y)
     {
         yield return '^';
-        pointer.y--;
+        a.y--;
     }
 }
 
