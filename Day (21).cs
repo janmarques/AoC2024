@@ -25,11 +25,12 @@ var smallest =
     @"1A";
 
 var input = smallInput;
-//input = fullInput;
+input = fullInput;
 //input = smallest;
 
 var legalPathsCache = new Dictionary<string, List<string>>();
 var longCompletePathsCache = new Dictionary<string, List<string>>();
+var completeSplitCache = new Dictionary<string, long>();
 
 var timer = System.Diagnostics.Stopwatch.StartNew();
 
@@ -61,57 +62,56 @@ var codes = input.Split(Environment.NewLine).Select(x => (code: x, numeric: int.
 var enableCache = false;
 enableCache = true;
 
-var betweenRobotCount = 2;
+var betweenRobotCount = 25;
 foreach (var code in codes)
 {
-    var d1 = GetLongCompletePathsSplit(doorkeypad, code.code);
+    var sections = GetLongCompletePaths(doorkeypad, code.code);
 
-    Console.WriteLine($"{code.code} {d1.First()}");
+    Console.WriteLine($"{code.code} {sections.First()}");
 
-    for (int i = 0; i < betweenRobotCount; i++)
-    {
-        d1 = d1.SelectMany(x => GetLongCompletePathsSplit(robotKeypad, x)).ToList();
-        var min = d1.Min(x => x.Length);
-        d1 = d1.Where(x => x.Length == min).ToList();
-        Console.WriteLine($"{code.code} {i}");
-    }
+    var nestedSectionResults = sections.Select(x => GetLongCompletePathsSplit(robotKeypad, x)).Min();
 
-    var somePath = d1.First();
-
-    result += new BigInteger(somePath.Length) * new BigInteger(code.numeric);
+    result += new BigInteger(nestedSectionResults) * new BigInteger(code.numeric);
 }
 
-List<string> GetLongCompletePathsSplit(List<(int x, int y, char c)> grid, string search) //  cache not used. Can we split up?
+long GetLongCompletePathsSplit(List<(int x, int y, char c)> grid, string search, int depth = 0)
 {
+    if (!enableCache) { return GetLongCompletePathsSplitInt(grid, search, depth); }
+    var key = $"{grid.Count}|{depth}|{search}";
+    if (!completeSplitCache.ContainsKey(key))
+    {
+        completeSplitCache[key] = GetLongCompletePathsSplitInt(grid, search, depth);
+    }
+    else
+    {
+        Utils.Counter("cachehit-GetLongCompletePathsSplit", 100);
+    }
+    return completeSplitCache[key];
+}
+long GetLongCompletePathsSplitInt(List<(int x, int y, char c)> grid, string search, int depth = 0)
+{
+    if (search == "")
+    {
+        return 0;
+    }
+    if (depth == betweenRobotCount - 1)
+    {
+        return GetLongCompletePaths(grid, search).Min(x => x.Length);
+    }
+
     var subBlocks = new List<List<string>>();
     var chunks = search.Split('A').SkipLast(1).Select(x => x + 'A').ToList();
-    foreach (var chunk in chunks)
-    {
-        var other = GetLongCompletePaths(grid, chunk);
-        subBlocks.Add(other);
-    }
 
-    var paths = new List<string>();
+    var chunkOne = chunks.First();
+    var length = GetLongCompletePaths(grid, chunkOne).Select(x => GetLongCompletePathsSplit(grid, x, depth + 1)).Min();
 
+    var rest = Utils.ReplaceFirst(search, chunkOne, "");
+    length += GetLongCompletePathsSplit(grid, rest, depth);
 
-    ComposePaths("", 0);
-    void ComposePaths(string res, int pos)
-    {
-        if (pos == subBlocks.Count)
-        {
-            paths.Add(res);
-            return;
-        }
-        foreach (var item in subBlocks[pos])
-        {
-            ComposePaths(res + item, pos + 1);
-        }
-    }
-
-    return paths;
+    return length;
 }
 
-List<string> GetLongCompletePaths(List<(int x, int y, char c)> grid, string search) //  cache not used. Can we split up?
+List<string> GetLongCompletePaths(List<(int x, int y, char c)> grid, string search)
 {
     if (!enableCache) { return GetLongCompletePathsInt(grid, search); }
     var key = $"{grid.Count}|{search}";
@@ -121,7 +121,7 @@ List<string> GetLongCompletePaths(List<(int x, int y, char c)> grid, string sear
     }
     else
     {
-        //Utils.Counter("cachehit-GetLongCompletePaths", 100);
+        Utils.Counter("cachehit-GetLongCompletePaths", 100);
     }
     return longCompletePathsCache[key];
 }
@@ -161,7 +161,7 @@ List<string> GetLegalPaths((int x, int y) a, (int x, int y) b, List<(int x, int 
     }
     else
     {
-        //Utils.Counter("cachehit-GetLegalPaths", 1000000);
+        Utils.Counter("cachehit-GetLegalPaths", 100);
     }
     return legalPathsCache[key];
 }

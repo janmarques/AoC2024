@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 
@@ -114,4 +115,6 @@ public static class Utils
             Console.WriteLine($"{name} {Counters[name]}");
         }
     }
+
+    public static string ReplaceFirst(string input, string search, string replacement) => new Regex(Regex.Escape(search)).Replace(input, replacement, 1);
 }
