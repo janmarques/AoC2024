@@ -87,6 +87,8 @@ public static class Utils
         return (grid, grid.Length, grid[0].Length);
     }
 
+    static public IEnumerable<(int x, int y, char c)> ParseCoordGrid(string input) => ParseCoordGrid(input, x => (x.x, x.y, x.c));
+
     static public IEnumerable<T> ParseCoordGrid<T>(string input, Func<(int x, int y, char c), T> init) where T : new()
     {
         (char[][] grid, int height, int width) = Parse2DGrid(input);
@@ -99,4 +101,6 @@ public static class Utils
         }
 
     }
+
+    static public int Manhatten((int x, int y) from, (int x, int y) to) => Math.Abs(from.x - to.x) + Math.Abs(from.y - to.y);
 }
