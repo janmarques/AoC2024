@@ -1,4 +1,5 @@
-﻿using System.Security.Cryptography;
+﻿using System.Globalization;
+using System.Security.Cryptography;
 
 var fullInput =
 @"9524047
@@ -1689,11 +1690,11 @@ var fullInput =
 
 var smallInput =
 @"1
-10
-100
+2
+3
 2024";
 
-var smallest = @"";
+var smallest = @"123";
 
 var input = smallInput;
 input = fullInput;
@@ -1702,17 +1703,74 @@ var timer = System.Diagnostics.Stopwatch.StartNew();
 
 var result = 0l;
 
+var bigNumbers = new Dictionary<int, List<int>>();
+var lastDigits = new Dictionary<int, List<int>>();
+var diff = new Dictionary<int, List<int>>();
+var sequences = new Dictionary<int, Dictionary<string, int>>();
 
-foreach (var line in input.Split(Environment.NewLine).Select(long.Parse))
+
+foreach (var line in input.Split(Environment.NewLine).Select(int.Parse))
 {
     var number = line;
+    var previousLastDigit = number % 10;
+    bigNumbers[number] = new List<int>();
+    lastDigits[number] = new List<int>();
+    diff[number] = new List<int>();
+    sequences[number] = new Dictionary<string, int>();
+
     for (int i = 0; i < 2000; i++)
     {
-        number = Handle(number);
-    }
-    Console.WriteLine(number);
-    result += number;
+        number = (int)Handle(number);
+        bigNumbers[line].Add(number);
+        var lastDigit = number % 10;
+        lastDigits[line].Add(lastDigit);
+        diff[line].Add(lastDigit - previousLastDigit);
+        previousLastDigit = lastDigit;
 
+    }
+
+    //var firstOccurences = new HashSet<string>();
+    for (int i = 4; i <= 2000; i++)
+    {
+        var seq = diff[line][(i - 4)..i];
+        var value = lastDigits[line][i-1];
+        var hash = string.Join(",", seq);
+        if (hash == "1,-3,5,1")
+        {
+
+        }
+        //if (firstOccurences.Contains(hash)) { continue; }
+        //firstOccurences.Add(hash);
+        if (sequences[line].ContainsKey(hash)) { continue; }
+        sequences[line][hash] = value;
+    }
+
+
+}
+
+// are there dupes?
+foreach (var item in sequences)
+{
+    var qq = item.Value.Select(x => x.Key).ToList();
+    if (qq.Count != qq.Distinct().Count()) { throw new Exception(); }
+}
+
+var allSequences = sequences.Values.Select(x => x.Select(y => y.Key)).SelectMany(x => x).Distinct();
+
+var asdsadresult = allSequences.Select(x => (x, bananas: GetBananaCount(x))).OrderByDescending(x => x.bananas).ToList();
+
+result = asdsadresult.Max(x => x.bananas);
+int GetBananaCount(string sequence)
+{
+    var sum = 0;
+    foreach (var item in sequences)
+    {
+        if (item.Value.TryGetValue(sequence, out var x))
+        {
+            sum += x;
+        }
+    }
+    return sum;
 }
 
 long Mix(long a, long b) => a ^ b;
@@ -1726,5 +1784,5 @@ long Handle(long a) => Step3(Step2(Step1(a)));
 
 timer.Stop();
 Console.WriteLine(result);
-Console.WriteLine(timer.ElapsedMilliseconds + "ms");
+Console.WriteLine(timer.ElapsedMilliseconds + "ms"); // 1511 too low
 Console.ReadLine();
