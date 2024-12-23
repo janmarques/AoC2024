@@ -3446,9 +3446,10 @@ foreach (var line in input.Split(Environment.NewLine))
 
 var results = new HashSet<string>();
 string Hash(params string[] x) => string.Join(",", x.OrderBy(y => y).ToList());
+IEnumerable<string> Unhash(string x) => x.Split(",");
 
-var areLinked = nodes.Values.SelectMany(x => x.Neighbours.Select(y => new[] { x.Name, y.Name }.OrderBy(x => x).ToArray())).ToHashSet();
-var areTwoLinked = areLinked.Where(x => x.Length == 2).ToList();
+var areLinked = nodes.Values.SelectMany(x => x.Neighbours.Select(y => new[] { x.Name, y.Name }.OrderBy(x => x).ToArray())).Select(Hash).ToHashSet();
+var areTwoLinked = areLinked.Where(x => x.Length == 5).ToList();
 
 
 
@@ -3458,7 +3459,7 @@ for (int depth = 3; ; depth++)
     var didSomething = false;
     foreach (var item in nodes.Values)
     {
-        didSomething |= Check(item.Name, areLinked.Where(x => x.Length == depth-1).ToList());
+        didSomething |= Check(item.Name, areLinked.Where(x => x.Length == (depth - 1) * 2 + (depth - 2)).ToList());
     }
     if (!didSomething)
     {
@@ -3466,17 +3467,18 @@ for (int depth = 3; ; depth++)
     }
 }
 
-bool Check(string item, IEnumerable<string[]> groups)
+bool Check(string item, IEnumerable<string> groups)
 {
     var didSomething = false;
     foreach (var group in groups)
     {
         var success = true;
-        foreach (var pc in group)
+        var pcs = Unhash(group).ToList();
+        foreach (var pc in pcs)
         {
             if (pc == item) { success = false; break; }
-            var key = new[] { item, pc }.OrderBy(x => x).ToArray();
-            if (!areTwoLinked.Contains(key))
+            var key = new[] { item, pc };
+            if (!areTwoLinked.Contains(Hash(key)))
             {
                 success = false;
                 break;
@@ -3485,9 +3487,9 @@ bool Check(string item, IEnumerable<string[]> groups)
         if (success)
         {
             didSomething = true;
-            var newGrp = group.ToList();
+            var newGrp = pcs.ToList();
             newGrp.Add(item);
-            areLinked.Add(newGrp.OrderBy(x => x).ToArray());
+            areLinked.Add(Hash(newGrp.ToArray()));
         }
     }
     return didSomething;
