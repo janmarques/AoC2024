@@ -1,4 +1,5 @@
-﻿var fullInput =
+﻿
+var fullInput =
 @"tg-ub
 wu-yx
 ss-ll
@@ -3443,28 +3444,57 @@ foreach (var line in input.Split(Environment.NewLine))
     node2.Neighbours.Add(node1);
 }
 
-var startPoints = nodes.Values.Where(x => x.Name.StartsWith("t")).ToList();
 var results = new HashSet<string>();
+string Hash(params string[] x) => string.Join(",", x.OrderBy(y => y).ToList());
 
-foreach (var item in startPoints)
+var areLinked = nodes.Values.SelectMany(x => x.Neighbours.Select(y => new[] { x.Name, y.Name }.OrderBy(x => x).ToArray())).ToHashSet();
+var areTwoLinked = areLinked.Where(x => x.Length == 2).ToList();
+
+
+
+for (int depth = 3; ; depth++)
 {
-    Traverse(new List<Node>() { item });
+    Console.WriteLine(depth);
+    var didSomething = false;
+    foreach (var item in nodes.Values)
+    {
+        didSomething |= Check(item.Name, areLinked.Where(x => x.Length == depth-1).ToList());
+    }
+    if (!didSomething)
+    {
+        break;
+    }
 }
 
-void Traverse(List<Node> set, int depthRemaining = 2)
+bool Check(string item, IEnumerable<string[]> groups)
 {
-    if (depthRemaining == 0)
+    var didSomething = false;
+    foreach (var group in groups)
     {
-        results.Add(string.Join("-", set.OrderBy(x => x.Name).Select(x => x.Name)));
-        return;
+        var success = true;
+        foreach (var pc in group)
+        {
+            if (pc == item) { success = false; break; }
+            var key = new[] { item, pc }.OrderBy(x => x).ToArray();
+            if (!areTwoLinked.Contains(key))
+            {
+                success = false;
+                break;
+            }
+        }
+        if (success)
+        {
+            didSomething = true;
+            var newGrp = group.ToList();
+            newGrp.Add(item);
+            areLinked.Add(newGrp.OrderBy(x => x).ToArray());
+        }
     }
-    foreach (var neighbour in set.First().Neighbours.Except(set).Where(x => set.All(y => y.Neighbours.Contains(x))))
-    {
-        var setCpy = set.ToList();
-        setCpy.Add(neighbour);
-        Traverse(setCpy, depthRemaining - 1);
-    }
+    return didSomething;
 }
+
+
+Console.WriteLine(string.Join(",", areLinked.OrderBy(x => x.Length).Last()));
 
 result = results.Count;
 
