@@ -318,53 +318,7 @@ rkq OR gwm -> bhd
 x37 XOR y37 -> vjg";
 
 var smallInput =
-@"x00: 1
-x01: 0
-x02: 1
-x03: 1
-x04: 0
-y00: 1
-y01: 1
-y02: 1
-y03: 1
-y04: 1
-
-ntg XOR fgs -> mjb
-y02 OR x01 -> tnw
-kwq OR kpj -> z05
-x00 OR x03 -> fst
-tgd XOR rvg -> z01
-vdt OR tnw -> bfw
-bfw AND frj -> z10
-ffh OR nrd -> bqk
-y00 AND y03 -> djm
-y03 OR y00 -> psh
-bqk OR frj -> z08
-tnw OR fst -> frj
-gnj AND tgd -> z11
-bfw XOR mjb -> z00
-x03 OR x00 -> vdt
-gnj AND wpb -> z02
-x04 AND y00 -> kjc
-djm OR pbm -> qhw
-nrd AND vdt -> hwm
-kjc AND fst -> rvg
-y04 OR y02 -> fgs
-y01 AND x02 -> pbm
-ntg OR kjc -> kwq
-psh XOR fgs -> tgd
-qhw XOR tgd -> z09
-pbm OR djm -> kpj
-x03 XOR y03 -> ffh
-x00 XOR y04 -> ntg
-bfw OR bqk -> z06
-nrd XOR fgs -> wpb
-frj XOR qhw -> z04
-bqk OR frj -> z07
-y03 OR x01 -> nrd
-hwm AND bqk -> z03
-tgd XOR rvg -> z12
-tnw OR pbm -> gnj";
+@"";
 
 var maybeBroken1 =
 @"x00: 0
@@ -456,22 +410,22 @@ var result = 0l;
 
 var split = input.Split(Environment.NewLine);
 var states = split.TakeWhile(x => x != "").Select(x => x.Split(": ")).ToDictionary(x => x[0], x => x[1] == "1");
-var connections = split.Skip(states.Count + 1).Select(x => x.Split(new[] { " -> ", " " }, StringSplitOptions.None)).Select(x => new Connection { A = x[0], Op = x[1], B = x[2], C = x[3] });
+var connections = split.Skip(states.Count + 1).Select(x => x.Split(new[] { " -> ", " " }, StringSplitOptions.None)).Select(x => new Connection { A = x[0], Op = x[1], B = x[2], C = x[3] }).ToList();
 
-var expectedResult = GetNumber('x') + GetNumber('y');
+var random = new Random();
+bool[] GetRandom() => Enumerable.Range(0, 45).Select(x => random.Next() % 2 == 1).ToArray();
+
+void Assign(char c, bool[] x)
+{
+    for (int i = 0; i < x.Length; i++)
+    {
+        states[$"{c}{i.ToString("D2")}"] = x[i];
+    }
+}
 
 
-//Console.WriteLine($"13? {GetNumber2(new bool[] { true, true, false, true })}");
-//Console.WriteLine($"21? {GetNumber2(new bool[] { false, true, false, true, false, true })}");
 
 
-
-//foreach (var item in connections)
-//{
-
-//    Console.WriteLine($"{item.A} -- {item.C}");
-//    Console.WriteLine($"{item.B} -- {item.C}");
-//}
 
 void PrintDebug(char c) => Console.WriteLine($"{c}\t{GetNumber(c)}\t{GetBitArrayString(GetBits(c))}");
 void PrintDebugNr(long v) => Console.WriteLine($"\t{v}\t{GetBitArrayString(ToBitArray(v))}");
@@ -523,39 +477,74 @@ long GetNumber2(bool[] a)
     return sum;
 }
 
-var visited = new HashSet<string>();
-while (connections.Count() > visited.Count)
+var origStates = states.ToDictionary();
+while(true)
 {
-    foreach (var connection in connections)
+    states = origStates.ToDictionary();
+    
+    Assign('x', GetRandom());
+    Assign('y', GetRandom());
+
+
+    var expectedResult = GetNumber('x') + GetNumber('y');
+
+
+    var visited = new HashSet<string>();
+    while (connections.Count() > visited.Count)
     {
-        var hash = connection.ToString();
-        if (visited.Contains(hash)) { continue; }
-        if (!(states.ContainsKey(connection.A) && states.ContainsKey(connection.B))) { continue; }
-        if (connection.Op == "AND") { states[connection.C] = states[connection.A] && states[connection.B]; }
-        if (connection.Op == "XOR") { states[connection.C] = states[connection.A] ^ states[connection.B]; }
-        if (connection.Op == "OR") { states[connection.C] = states[connection.A] || states[connection.B]; }
-        visited.Add(hash);
-        break;
+        foreach (var connection in connections)
+        {
+            var hash = connection.ToString();
+            if (visited.Contains(hash)) { continue; }
+            if (!(states.ContainsKey(connection.A) && states.ContainsKey(connection.B))) { continue; }
+            if (connection.Op == "AND") { states[connection.C] = states[connection.A] && states[connection.B]; }
+            if (connection.Op == "XOR") { states[connection.C] = states[connection.A] ^ states[connection.B]; }
+            if (connection.Op == "OR") { states[connection.C] = states[connection.A] || states[connection.B]; }
+            visited.Add(hash);
+            break;
+        }
     }
+
+    result = GetNumber('z');
+
+    PrintDebug('x');
+    PrintDebug('y');
+
+    PrintDebug('z');
+
+    PrintDebugNr(expectedResult);
+
+    Compare(ToBitArray(expectedResult), GetBits('z'));
+    Console.ReadLine();
 }
 
-result = GetNumber('z');
-
-PrintDebug('x');
-PrintDebug('y');
-
-PrintDebug('z');
-
-PrintDebugNr(expectedResult);
-
-Compare(ToBitArray(expectedResult), GetBits('z'));
 
 void Compare(bool[] expected, bool[] actual)
 {
-    Console.WriteLine("i\tz\tEx\tac\t?");
-    for (int i = 0; i < expected.Length; i++)
+    var diff = actual.Length - expected.Length;
+    if (diff < 0)
     {
-        Console.WriteLine($"{i}\tz{expected.Length-i-1}\t{GetBoolString(expected[i])}\t{GetBoolString(actual[i])}\t{expected[i] == actual[i]}");
+        Console.WriteLine($"Bits missing!");
+        var cpy = actual.ToList();
+        for (int i = 0; i < diff * -1; i++)
+        {
+            cpy.Insert(0, false);
+        }
+        actual = cpy.ToArray();
+    }
+    else if (diff > 0)
+    {
+        var cpy = expected.ToList();
+        for (int i = 0; i < diff; i++)
+        {
+            cpy.Insert(0, false);
+        }
+        expected = cpy.ToArray();
+    }
+    Console.WriteLine("i\tz\tEx\tac\t?");
+    for (int i = 0; i < actual.Length; i++)
+    {
+        Console.WriteLine($"{i}\tz{expected.Length - i - 1}\t{GetBoolString(expected[i])}\t{GetBoolString(actual[i])}\t{expected[i] == actual[i]}");
     }
 }
 
