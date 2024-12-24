@@ -177,7 +177,7 @@ y20 AND x20 -> vwh
 cjh XOR hsn -> z06
 grk XOR gcj -> z23
 sbn AND pwt -> qwg
-mnm XOR gqb -> gwh
+mnm XOR gqb -> z09
 tdh XOR jrb -> z44
 y04 XOR x04 -> ptv
 vwh OR vvc -> kgk
@@ -243,7 +243,7 @@ y35 XOR x35 -> prn
 x12 XOR y12 -> htr
 pwt XOR sbn -> z42
 gpp OR vmq -> mrg
-dsk OR ptc -> z09
+dsk OR ptc -> gwh
 cbm OR hgb -> jgf
 frv OR mhd -> vsw
 x09 AND y09 -> ptc
@@ -478,10 +478,10 @@ long GetNumber2(bool[] a)
 }
 
 var origStates = states.ToDictionary();
-while(true)
+while (true)
 {
     states = origStates.ToDictionary();
-    
+
     Assign('x', GetRandom());
     Assign('y', GetRandom());
 
@@ -514,12 +514,12 @@ while(true)
 
     PrintDebugNr(expectedResult);
 
-    Compare(ToBitArray(expectedResult), GetBits('z'));
-    Console.ReadLine();
+    Compare(ToBitArray(expectedResult), GetBits('z'), 12);
+    //Console.ReadLine();
 }
 
 
-void Compare(bool[] expected, bool[] actual)
+void Compare(bool[] expected, bool[] actual, int assertSafeZ)
 {
     var diff = actual.Length - expected.Length;
     if (diff < 0)
@@ -544,7 +544,14 @@ void Compare(bool[] expected, bool[] actual)
     Console.WriteLine("i\tz\tEx\tac\t?");
     for (int i = 0; i < actual.Length; i++)
     {
-        Console.WriteLine($"{i}\tz{expected.Length - i - 1}\t{GetBoolString(expected[i])}\t{GetBoolString(actual[i])}\t{expected[i] == actual[i]}");
+        var z = expected.Length - i - 1;
+        var result = expected[i] == actual[i];
+        Console.WriteLine($"{i}\tz{expected.Length - i - 1}\t{GetBoolString(expected[i])}\t{GetBoolString(actual[i])}\t{result}");
+        if (z <= assertSafeZ && !result)
+        {
+            Console.WriteLine("wrong!");
+            Console.ReadLine();
+        }
     }
 }
 
@@ -553,7 +560,14 @@ Console.WriteLine(result);
 Console.WriteLine(timer.ElapsedMilliseconds + "ms");
 Console.ReadLine();
 
+/*
+ * Switched: 
+mnm XOR gqb -> gwh
+dsk OR ptc -> z09
 
+
+
+ * */
 
 class Connection
 {
@@ -565,3 +579,5 @@ class Connection
 
     public Connection Clone() => new Connection { A = A, B = B, C = C, Op = Op };
 }
+
+
