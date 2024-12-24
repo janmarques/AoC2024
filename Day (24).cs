@@ -162,7 +162,7 @@ y31 XOR x31 -> tkw
 pmg XOR rnc -> z33
 x11 AND y11 -> cbm
 x43 AND y43 -> bmf
-kgk AND sbs -> z21
+kgk AND sbs -> rcb
 kvw AND bgg -> gwm
 x17 XOR y17 -> tdb
 kfp OR qvv -> pwt
@@ -297,7 +297,7 @@ x08 XOR y08 -> jhr
 tng OR pwk -> tpv
 cvv XOR gwh -> z10
 mwg XOR tkw -> z31
-kgk XOR sbs -> rcb
+kgk XOR sbs -> z21
 x17 AND y17 -> fpk
 qwr XOR wbw -> z13
 y07 XOR x07 -> gjv
@@ -514,7 +514,7 @@ while (true)
 
     //PrintDebugNr(expectedResult);
 
-    Compare(ToBitArray(expectedResult), GetBits('z'), 21);
+    Compare(ToBitArray(expectedResult), GetBits('z'), 22);
     //Console.ReadLine();
 }
 
@@ -568,6 +568,8 @@ dsk OR ptc -> z09
 y13 XOR x13 -> wgb
 y13 AND x13 -> wbw
 
+kgk AND sbs -> z21
+kgk XOR sbs -> z21
 
  * */
 
