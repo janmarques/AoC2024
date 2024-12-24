@@ -235,7 +235,7 @@ x40 XOR y40 -> qwt
 y02 AND x02 -> tng
 y24 XOR x24 -> kdn
 knd OR hds -> wcs
-x39 AND y39 -> z39
+x39 AND y39 -> jct
 y15 AND x15 -> vch
 crp OR wjg -> wjf
 y26 XOR x26 -> jkt
@@ -255,7 +255,7 @@ bgh XOR pvj -> z15
 vdc AND tjc -> vvc
 x41 XOR y41 -> krk
 dmc OR njd -> qwr
-wjf XOR ksf -> jct
+wjf XOR ksf -> z39
 ptv XOR bdk -> z04
 x42 XOR y42 -> sbn
 tpv AND npk -> hrr
@@ -514,7 +514,7 @@ while (true)
 
     //PrintDebugNr(expectedResult);
 
-    Compare(ToBitArray(expectedResult), GetBits('z'), 22);
+    Compare(ToBitArray(expectedResult), GetBits('z'), 58);
     //Console.ReadLine();
 }
 
@@ -571,6 +571,8 @@ y13 AND x13 -> wbw
 kgk AND sbs -> z21
 kgk XOR sbs -> z21
 
+x39 AND y39 -> z39
+wjf XOR ksf -> jct
  * */
 
 class Connection
