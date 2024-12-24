@@ -366,7 +366,28 @@ hwm AND bqk -> z03
 tgd XOR rvg -> z12
 tnw OR pbm -> gnj";
 
-var smallest =
+var maybeBroken1 =
+@"x00: 0
+x01: 1
+x02: 0
+x03: 1
+x04: 0
+x05: 1
+y00: 0
+y01: 0
+y02: 1
+y03: 1
+y04: 0
+y05: 1
+
+x00 AND y00 -> z05
+x01 AND y01 -> z02
+x02 AND y02 -> z01
+x03 AND y03 -> z03
+x04 AND y04 -> z04
+x05 AND y05 -> z00";
+
+var maybeBroken2 =
 @"x00: 0
 x01: 1
 x02: 0
@@ -423,8 +444,9 @@ x01 XOR y01 -> z01
 x02 OR y02 -> z02";
 
 var input = smallInput;
-//input = fullInput;
-//input = smallest;
+input = fullInput;
+input = maybeBroken1;
+input = maybeBroken2;
 //input = smallest2;
 //input = smallest3;
 //input = smallest4;
@@ -436,15 +458,43 @@ var split = input.Split(Environment.NewLine);
 var states = split.TakeWhile(x => x != "").Select(x => x.Split(": ")).ToDictionary(x => x[0], x => x[1] == "1");
 var connections = split.Skip(states.Count + 1).Select(x => x.Split(new[] { " -> ", " " }, StringSplitOptions.None)).Select(x => new Connection { A = x[0], Op = x[1], B = x[2], C = x[3] });
 
+
+
+//Console.WriteLine($"13? {GetNumber2(new bool[] { true, true, false, true })}");
+//Console.WriteLine($"21? {GetNumber2(new bool[] { false, true, false, true, false, true })}");
+
+
 Console.WriteLine($"X {GetNumber('x')}");
 Console.WriteLine($"Y {GetNumber('y')}");
 Console.WriteLine($"Target {GetNumber('x') + GetNumber('y')}");
 
+//foreach (var item in connections)
+//{
+
+//    Console.WriteLine($"{item.A} -- {item.C}");
+//    Console.WriteLine($"{item.B} -- {item.C}");
+//}
+
 long GetNumber(char c)
 {
-    var zs = states.Where(x => x.Key.StartsWith(c)).OrderBy(x => x.Key).Select(x => x.Value).Reverse().ToArray();
+    var xxx = states.Where(x => x.Key.StartsWith(c)).OrderBy(x => x.Key).ToList();
+    var zs = xxx.Select(x => x.Value)/*.Reverse()*/.ToArray();
 
-    return zs.Aggregate(0l, (sum, val) => (sum * 2) + (val ? 1 : 0));
+    return GetNumber2(zs);
+}
+
+
+long GetNumber2(bool[] a)
+{
+    var sum = 0L;
+    for (int i = 0; i < a.Length; i++)
+    {
+        if (a[i])
+        {
+            sum += (long)Math.Pow(2, i);
+        }
+    }
+    return sum;
 }
 
 var visited = new HashSet<string>();
