@@ -507,15 +507,15 @@ while (true)
 
     result = GetNumber('z');
 
-    //PrintDebug('x');
-    //PrintDebug('y');
+    PrintDebug('x');
+    PrintDebug('y');
 
-    //PrintDebug('z');
+    PrintDebug('z');
 
-    //PrintDebugNr(expectedResult);
+    PrintDebugNr(expectedResult);
 
     Compare(ToBitArray(expectedResult), GetBits('z'), 58);
-    //Console.ReadLine();
+    Console.ReadLine();
 }
 
 
@@ -541,12 +541,12 @@ void Compare(bool[] expected, bool[] actual, int assertSafeZ)
         }
         expected = cpy.ToArray();
     }
-    //Console.WriteLine("i\tz\tEx\tac\t?");
+    Console.WriteLine("i\tz\tEx\tac\t?");
     for (int i = 0; i < actual.Length; i++)
     {
         var z = expected.Length - i - 1;
         var result = expected[i] == actual[i];
-        //Console.WriteLine($"{i}\tz{expected.Length - i - 1}\t{GetBoolString(expected[i])}\t{GetBoolString(actual[i])}\t{result}");
+        Console.WriteLine($"{i}\tz{expected.Length - i - 1}\t{GetBoolString(expected[i])}\t{GetBoolString(actual[i])}\t{result}");
         if (z <= assertSafeZ && !result)
         {
             Console.WriteLine("wrong!");
@@ -569,10 +569,14 @@ y13 XOR x13 -> wgb
 y13 AND x13 -> wbw
 
 kgk AND sbs -> z21
-kgk XOR sbs -> z21
+kgk XOR sbs -> rcb
 
 x39 AND y39 -> z39
 wjf XOR ksf -> jct
+
+
+
+gwh,jct,rcb,wbw,wgb,z09,z21,z39
  * */
 
 class Connection
