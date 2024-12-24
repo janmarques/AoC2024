@@ -1,4 +1,6 @@
-﻿using System.Collections;
+﻿using AoC2023;
+using System.Buffers.Binary;
+using System.Collections;
 
 var fullInput =
 @"x00: 1
@@ -365,6 +367,27 @@ tgd XOR rvg -> z12
 tnw OR pbm -> gnj";
 
 var smallest =
+@"x00: 0
+x01: 1
+x02: 0
+x03: 1
+x04: 0
+x05: 1
+y00: 0
+y01: 0
+y02: 1
+y03: 1
+y04: 0
+y05: 1
+
+x00 AND y00 -> z00
+x01 AND y01 -> z02
+x02 AND y02 -> z01
+x03 AND y03 -> z03
+x04 AND y04 -> z04
+x05 AND y05 -> z05";
+
+var smallest2 =
 @"x00: 1
 x01: 1
 x02: 1
@@ -376,9 +399,21 @@ x00 AND y00 -> z00
 x01 XOR y01 -> z01
 x02 OR y02 -> z02";
 
+var smallest3 =
+@"x00: 1
+x01: 1
+x02: 0
+x03: 1
+y00: 1
+y01: 0
+y02: 1
+y03: 1";
+
 var input = smallInput;
-input = fullInput;
+//input = fullInput;
 //input = smallest;
+//input = smallest2;
+//input = smallest3;
 var timer = System.Diagnostics.Stopwatch.StartNew();
 
 var result = 0l;
@@ -386,6 +421,17 @@ var result = 0l;
 var split = input.Split(Environment.NewLine);
 var states = split.TakeWhile(x => x != "").Select(x => x.Split(": ")).ToDictionary(x => x[0], x => x[1] == "1");
 var connections = split.Skip(states.Count + 1).Select(x => x.Split(new[] { " -> ", " " }, StringSplitOptions.None)).Select(x => new Connection { A = x[0], Op = x[1], B = x[2], C = x[3] });
+
+Console.WriteLine($"X {GetNumber('x')}");
+Console.WriteLine($"Y {GetNumber('y')}");
+Console.WriteLine($"Target {GetNumber('x') + GetNumber('y')}");
+
+long GetNumber(char c)
+{
+    var zs = states.Where(x => x.Key.StartsWith(c)).OrderBy(x => x.Key).Select(x => x.Value).Reverse().ToArray();
+
+    return zs.Aggregate(0l, (sum, val) => (sum * 2) + (val ? 1 : 0));
+}
 
 var visited = new HashSet<string>();
 while (connections.Count() > visited.Count)
@@ -403,18 +449,14 @@ while (connections.Count() > visited.Count)
     }
 }
 
-var xx = states.OrderBy(x => x.Key);
-
-var zs = states.Where(x => x.Key.StartsWith("z")).OrderBy(x => x.Key).Select(x => x.Value).ToArray();
-var bytes = new byte[64];
-new BitArray(zs).CopyTo(bytes, 0);
-
-result = BitConverter.ToInt64(bytes);
+result = GetNumber('z');
 
 timer.Stop();
 Console.WriteLine(result);
 Console.WriteLine(timer.ElapsedMilliseconds + "ms");
 Console.ReadLine();
+
+
 
 class Connection
 {
@@ -423,4 +465,6 @@ class Connection
     public string C { get; set; }
     public string Op { get; set; }
     public override string ToString() => $"{A} {Op} {B} -> {C}";
+
+    public Connection Clone() => new Connection { A = A, B = B, C = C, Op = Op };
 }
