@@ -381,8 +381,8 @@ y04: 0
 y05: 1
 
 x00 AND y00 -> z00
-x01 AND y01 -> z02
-x02 AND y02 -> z01
+x01 AND y01 -> z01
+x02 AND y02 -> z02
 x03 AND y03 -> z03
 x04 AND y04 -> z04
 x05 AND y05 -> z05";
@@ -409,11 +409,25 @@ y01: 0
 y02: 1
 y03: 1";
 
+
+var smallest4 =
+@"x00: 1
+x01: 1
+x02: 1
+y00: 0
+y01: 1
+y02: 0
+
+x00 AND y00 -> z00
+x01 XOR y01 -> z01
+x02 OR y02 -> z02";
+
 var input = smallInput;
 //input = fullInput;
 //input = smallest;
 //input = smallest2;
 //input = smallest3;
+//input = smallest4;
 var timer = System.Diagnostics.Stopwatch.StartNew();
 
 var result = 0l;
