@@ -445,8 +445,8 @@ x02 OR y02 -> z02";
 
 var input = smallInput;
 input = fullInput;
-input = maybeBroken1;
-input = maybeBroken2;
+//input = maybeBroken1;
+//input = maybeBroken2;
 //input = smallest2;
 //input = smallest3;
 //input = smallest4;
@@ -458,15 +458,13 @@ var split = input.Split(Environment.NewLine);
 var states = split.TakeWhile(x => x != "").Select(x => x.Split(": ")).ToDictionary(x => x[0], x => x[1] == "1");
 var connections = split.Skip(states.Count + 1).Select(x => x.Split(new[] { " -> ", " " }, StringSplitOptions.None)).Select(x => new Connection { A = x[0], Op = x[1], B = x[2], C = x[3] });
 
+var expectedResult = GetNumber('x') + GetNumber('y');
 
 
 //Console.WriteLine($"13? {GetNumber2(new bool[] { true, true, false, true })}");
 //Console.WriteLine($"21? {GetNumber2(new bool[] { false, true, false, true, false, true })}");
 
 
-Console.WriteLine($"X {GetNumber('x')}");
-Console.WriteLine($"Y {GetNumber('y')}");
-Console.WriteLine($"Target {GetNumber('x') + GetNumber('y')}");
 
 //foreach (var item in connections)
 //{
@@ -475,12 +473,40 @@ Console.WriteLine($"Target {GetNumber('x') + GetNumber('y')}");
 //    Console.WriteLine($"{item.B} -- {item.C}");
 //}
 
-long GetNumber(char c)
+void PrintDebug(char c) => Console.WriteLine($"{c}\t{GetNumber(c)}\t{GetBitArrayString(GetBits(c))}");
+void PrintDebugNr(long v) => Console.WriteLine($"\t{v}\t{GetBitArrayString(ToBitArray(v))}");
+
+
+string GetBitArrayString(bool[] x) => string.Join("", x.Select(GetBoolString));
+string GetBoolString(bool y) => y ? "1" : "0";
+
+bool[] GetBits(char c)
 {
-    var xxx = states.Where(x => x.Key.StartsWith(c)).OrderBy(x => x.Key).ToList();
+    var xxx = states.Where(x => x.Key.StartsWith(c)).OrderByDescending(x => x.Key).ToList();
     var zs = xxx.Select(x => x.Value)/*.Reverse()*/.ToArray();
 
-    return GetNumber2(zs);
+    return zs;
+}
+
+
+
+bool[] ToBitArray(long x)
+{
+    var result = new List<bool>();
+    while (x != 0)
+    {
+        result.Add(x % 2 == 1);
+        x /= 2;
+    }
+
+    result.Reverse();
+    return result.ToArray();
+}
+
+
+long GetNumber(char c)
+{
+    return GetNumber2(GetBits(c));
 }
 
 
@@ -491,7 +517,7 @@ long GetNumber2(bool[] a)
     {
         if (a[i])
         {
-            sum += (long)Math.Pow(2, i);
+            sum += (long)Math.Pow(2, a.Length - i - 1);
         }
     }
     return sum;
@@ -514,6 +540,24 @@ while (connections.Count() > visited.Count)
 }
 
 result = GetNumber('z');
+
+PrintDebug('x');
+PrintDebug('y');
+
+PrintDebug('z');
+
+PrintDebugNr(expectedResult);
+
+Compare(ToBitArray(expectedResult), GetBits('z'));
+
+void Compare(bool[] expected, bool[] actual)
+{
+    Console.WriteLine("i\tz\tEx\tac\t?");
+    for (int i = 0; i < expected.Length; i++)
+    {
+        Console.WriteLine($"{i}\tz{expected.Length-i-1}\t{GetBoolString(expected[i])}\t{GetBoolString(actual[i])}\t{expected[i] == actual[i]}");
+    }
+}
 
 timer.Stop();
 Console.WriteLine(result);
