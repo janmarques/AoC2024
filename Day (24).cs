@@ -205,7 +205,7 @@ jgf AND htr -> dmc
 nrw OR cdw -> pbv
 kpf XOR qpd -> z02
 htr XOR jgf -> z12
-y13 AND x13 -> wbw
+y13 AND x13 -> wgb
 x43 XOR y43 -> nsb
 hrr OR rtt -> bdk
 bcw OR pgn -> jbk
@@ -285,7 +285,7 @@ nbw OR bqn -> bqb
 tpv XOR npk -> z03
 x20 XOR y20 -> vdc
 x32 AND y32 -> ttt
-y13 XOR x13 -> wgb
+y13 XOR x13 -> wbw
 x12 AND y12 -> njd
 y35 AND x35 -> qph
 tdb AND ctv -> ffh
@@ -514,7 +514,7 @@ while (true)
 
     PrintDebugNr(expectedResult);
 
-    Compare(ToBitArray(expectedResult), GetBits('z'), 12);
+    Compare(ToBitArray(expectedResult), GetBits('z'), 13);
     //Console.ReadLine();
 }
 
@@ -565,6 +565,8 @@ Console.ReadLine();
 mnm XOR gqb -> gwh
 dsk OR ptc -> z09
 
+y13 XOR x13 -> wgb
+y13 AND x13 -> wbw
 
 
  * */
