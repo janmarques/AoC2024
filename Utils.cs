@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -117,4 +118,30 @@ public static class Utils
     }
 
     public static string ReplaceFirst(string input, string search, string replacement) => new Regex(Regex.Escape(search)).Replace(input, replacement, 1);
+
+    public static BigInteger gcf(BigInteger a, BigInteger b)
+    {
+        while (b != 0)
+        {
+            BigInteger temp = b;
+            b = a % b;
+            a = temp;
+        }
+        return a;
+    }
+    public static BigInteger LeastCommonMultiple(params BigInteger[] x)
+    {
+        var result = BigInteger.One;
+
+        for (int i = 0; i < x.Length; i++)
+        {
+            result = LeastCommonMultiple(result, x[i]);
+        }
+        return result;
+    }
+
+    public static BigInteger LeastCommonMultiple(BigInteger a, BigInteger b)
+    {
+        return (a / gcf(a, b)) * b;
+    }
 }
